@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Stack Flow — simple, addictive, flawless</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#0e1530; --text:#e6edf7; --muted:#90a1c7; --line:rgba(255,255,255,.12);
+    --accent:#7c5cff; --accent2:#22d3ee; --glass:rgba(255,255,255,.06); --shadow:0 24px 60px rgba(3,6,23,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f6f8ff; --panel:#ffffff; --text:#0b1226; --muted:#475569; --line:rgba(2,6,23,.12);
+    --accent:#5b5bd6; --accent2:#0ea5e9; --glass:rgba(2,6,23,.045); --shadow:0 18px 40px rgba(2,6,23,.10);
+  }
+  html,body{height:100%}
+  body{
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 800px at -10% -20%, rgba(124,92,255,.22), transparent 60%) no-repeat,
+      radial-gradient(1000px 700px at 110% 0%, rgba(34,211,238,.16), transparent 60%) no-repeat,
+      var(--bg);
+    color:var(--text);
+  }
+  .glass{ background:linear-gradient(180deg, var(--glass), transparent); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); }
+  .btn-accent{ background:linear-gradient(135deg,var(--accent),#4338ca); color:#fff; border:0; box-shadow:var(--shadow); }
+  .btn-outline{ border:1px solid var(--line); background:var(--glass); color:var(--text); }
+  .pill{ border:1px solid var(--line); background:var(--glass); border-radius:999px; padding:.35rem .7rem; }
+  .toggle{ display:inline-flex; gap:.25rem; border:1px solid var(--line); border-radius:999px; padding:.25rem; background:var(--glass);}
+  .toggle button{ border:0; background:transparent; color:var(--muted); padding:.35rem .75rem; border-radius:999px; }
+  .toggle button.active{ background:var(--accent); color:#fff; }
+  .logo{ width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--accent)); box-shadow:var(--shadow); }
+
+  /* Sections */
+  #menu{ display:block; }
+  #play{ display:none; }
+
+  /* Game screen (game-only view) */
+  #play.fullscreen-mode{ position:fixed; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; padding:8px; }
+  #gameWrap{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  #game{ background:var(--panel); border:1px solid var(--line); border-radius:16px; touch-action:manipulation; max-height:100%; max-width:100%; }
+
+  /* HUD */
+  .hud{
+    position:fixed; top:10px; left:50%; transform:translateX(-50%);
+    display:flex; gap:.5rem; z-index:20;
+  }
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem; border-radius:999px; background:var(--glass); border:1px solid var(--line); }
+
+  /* Top-right controls in play */
+  .play-controls{ position:fixed; top:10px; right:10px; display:flex; gap:.5rem; z-index:20; }
+
+  /* Pause overlay */
+  #pauseOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:30;
+  }
+  #pauseCard{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px; min-width:260px; }
+
+  /* Toast */
+  .toast-tip{ position:fixed; left:50%; transform:translateX(-50%); bottom:16px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; padding:.5rem .75rem; box-shadow:var(--shadow); display:none; z-index:1080; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ===== MENU (HOME) ===== -->
+<section id="menu" class="container py-5">
+  <div class="glass p-4 p-md-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="logo">S</div><h1 class="h3 m-0 fw-800">Stack Flow</h1>
+        </div>
+        <p class="text-secondary mb-3">Ultra-simple, forgiving tower stacker. Tap to drop. Align to build. Perfect hits give streaks. One free revive. Your progress autosaves.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="pill">Best: <b id="bestMenu">0</b></span>
+          <span class="pill">Perfects (last): <b id="perfMenu">0</b></span>
+        </div>
+      </div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-accent btn-lg" id="btnNew"><i class="bi bi-stars"></i> New Game</button>
+        <button class="btn btn-outline btn-lg" id="btnContinue"><i class="bi bi-play-circle"></i> Continue</button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#howModal"><i class="bi bi-question-circle"></i> How to Play</button>
+          <div class="toggle" id="themeToggle" role="tablist" aria-label="Theme toggle">
+            <button class="active" data-theme="dark" title="Dark"><i class="bi bi-moon-stars"></i></button>
+            <button data-theme="light" title="Light"><i class="bi bi-brightness-high"></i></button>
+          </div>
+          <span class="pill small">Sound: <span id="soundState" class="fw-semibold ms-1">On</span></span>
+          <button class="btn btn-outline" id="btnSound"><i class="bi bi-volume-up"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PLAY (GAME-ONLY) ===== -->
+<section id="play" class="fullscreen-mode" aria-label="Game screen">
+  <div id="gameWrap">
+    <canvas id="game" width="420" height="640"></canvas>
+  </div>
+
+  <!-- HUD center-top -->
+  <div class="hud">
+    <span class="chip"><i class="bi bi-graph-up-arrow"></i> Score: <b id="score">0</b></span>
+    <span class="chip" id="chipStreak" style="display:none;"><i class="bi bi-lightning-charge-fill"></i> Streak <b id="streak">0</b></span>
+  </div>
+
+  <!-- Controls top-right -->
+  <div class="play-controls">
+    <button class="btn btn-outline btn-sm" id="btnPause"><i class="bi bi-pause"></i> Pause</button>
+    <button class="btn btn-outline btn-sm" id="btnSave"><i class="bi bi-save"></i> Save</button>
+  </div>
+
+  <!-- Pause overlay -->
+  <div id="pauseOverlay">
+    <div id="pauseCard" class="text-center">
+      <h6 class="mb-2">Paused</h6>
+      <div class="d-grid gap-2">
+        <button class="btn btn-accent" id="btnResume"><i class="bi bi-play"></i> Resume</button>
+        <button class="btn btn-outline" id="btnHomeFromPause"><i class="bi bi-house"></i> Home (Save & Continue)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW-TO -->
+<div class="modal fade" id="howModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="background:var(--panel); color:var(--text); border:1px solid var(--line);">
+    <div class="modal-header">
+      <h5 class="modal-title">How to Play</h5>
+      <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body small">
+      <ul>
+        <li>Tap / click / <span class="pill py-0 px-2">Space</span> to <b>drop</b> the moving block.</li>
+        <li>Blocks stack if they overlap. Early levels are forgiving; slight edge catches still count.</li>
+        <li>Perfectly aligned drops add to your <b>streak</b> and bonus points.</li>
+        <li>You have <b>one free revive</b> if you miss once.</li>
+        <li><b>Pause → Home</b> saves an in-progress run so you can <b>Continue</b> from the menu.</li>
+      </ul>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" data-bs-dismiss="modal">Close</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- GAME OVER -->
+<div class="modal fade" id="overModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="background:var(--panel); color:var(--text); border:1px solid var(--line);">
+    <div class="modal-header">
+      <h5 class="modal-title"><i class="bi bi-emoji-dizzy"></i> Game Over</h5>
+      <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
+        <div>Score: <b id="overScore">0</b></div>
+        <div>Best: <b id="overBest">0</b></div>
+        <div>Perfects: <b id="overPerfects">0</b></div>
+      </div>
+      <div class="mt-3 d-grid gap-2">
+        <button class="btn btn-accent" id="btnRestart"><i class="bi bi-arrow-counterclockwise"></i> Restart</button>
+        <button class="btn btn-outline" id="btnHomeFromOver"><i class="bi bi-house"></i> Home</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<div id="toast" class="toast-tip"><i class="bi bi-info-circle"></i> <span id="toastText">Saved</span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ===== Helpers & storage ===== */
+const qs = s => document.querySelector(s);
+const qsa = s => [...document.querySelectorAll(s)];
+const store = {
+  get(k, d){ try{ return JSON.parse(localStorage.getItem(k) ?? JSON.stringify(d)); }catch{ return d; } },
+  set(k, v){ localStorage.setItem(k, JSON.stringify(v)); },
+  del(k){ localStorage.removeItem(k); }
+};
+
+/* ===== Theme & sound (menu only) ===== */
+const themeKey='sf_theme_v2';
+function setTheme(t){ document.body.setAttribute('data-theme', t); store.set(themeKey, t);
+  qsa('#themeToggle button').forEach(b=> b.classList.toggle('active', b.dataset.theme===t));
+}
+setTheme(store.get(themeKey,'dark'));
+qsa('#themeToggle button').forEach(b=> b.addEventListener('click', ()=> setTheme(b.dataset.theme)));
+
+const SFX = (()=>{ let on=store.get('sf_sound_on', true), ctx;
+  function beep(f=620,t=.06,type='sine',vol=.06){
+    if(!on) return;
+    ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type; o.frequency.value=f; g.gain.value=vol; o.connect(g); g.connect(ctx.destination);
+    o.start(); setTimeout(()=>o.stop(), t*1000);
+  }
+  return { drop(){beep(520,.05,'square',.06)}, perfect(){beep(880,.08,'triangle',.07)}, edge(){beep(700,.06,'sine',.06)},
+           fail(){beep(160,.14,'square',.08)}, toggle(){on=!on; store.set('sf_sound_on',on); return on;}, on(){return on;} };
+})();
+qs('#soundState').textContent = SFX.on() ? 'On' : 'Off';
+qs('#btnSound').onclick = ()=> qs('#soundState').textContent = SFX.toggle() ? 'On':'Off';
+
+/* ===== Menu <-> Play view switching ===== */
+const MENU = qs('#menu');
+const PLAY = qs('#play');
+function showMenu(){
+  cancelLoop(); unbindInput();
+  PLAY.style.display='none';
+  MENU.style.display='block';
+  document.body.scrollTo ? document.body.scrollTo(0,0) : window.scrollTo(0,0);
+  // update menu stats
+  qs('#bestMenu').textContent = META.best;
+  qs('#perfMenu').textContent = LAST.perfects || 0;
+  qs('#btnContinue').disabled = !store.get(SAVE_KEY,null);
+}
+function showPlay(){
+  MENU.style.display='none';
+  PLAY.style.display='flex'; // full screen section
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+/* ===== Meta & save keys ===== */
+const META_KEY='sf_meta_v2';
+const SAVE_KEY='sf_save_v2';
+let META = Object.assign({best:0}, store.get(META_KEY,{best:0}));
+let LAST = { perfects: 0 };
+function saveMeta(){ store.set(META_KEY, META); }
+
+/* ===== Canvas sizing (game-only view) ===== */
+const canvas = qs('#game'), ctx = canvas.getContext('2d');
+function fitCanvas(){
+  // Keep 3:4 ratio; fill as big as fits within viewport minus small padding
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let w = Math.min(520, vw - 16);
+  let h = Math.min( Math.round(w*4/3), vh - 16);
+  // If height is limiting, recompute width from height
+  if (h > vh-16){ h = vh-16; w = Math.round(h*3/4); }
+  canvas.width = w; canvas.height = h;
+  if(game) { adjustCamera(); draw(); }
+}
+window.addEventListener('resize', fitCanvas, {passive:true});
+
+/* ===== Game constants (forgiving) ===== */
+const BASE_SPEED = 1.1;
+const SPEED_RAMP = 0.0006;
+const PERFECT_TOL = 3;
+const EDGE_TOL_EARLY = 18;   // extra catch tolerance for first ~10 levels
+const ASSISTS = 4;           // small auto-aligns early
+const REVIVES = 1;
+const BLOCK_H = 22;
+
+/* ===== State ===== */
+let game=null, raf=0, lastTs=0, paused=false;
+let keyHandler=null, clickBound=false;
+
+/* ===== Utilities ===== */
+function makeRNG(seed){ let s = seed|0 || (Math.random()*1e9)|0;
+  return ()=>{ s^=s<<13; s^=s>>>17; s^=s<<5; return (s>>>0)/4294967296; };
+}
+function toast(msg){ const t=qs('#toast'); qs('#toastText').textContent=msg; t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display='none',1800); }
+
+/* ===== Palette ===== */
+function pickColor(i){
+  const dark = ['#7c5cff','#22d3ee','#84cc16','#f59e0b','#fb7185','#a78bfa','#06b6d4'];
+  const light= ['#5b5bd6','#0ea5e9','#65a30d','#d97706','#f43f5e','#7c3aed','#0891b2'];
+  const arr = document.body.getAttribute('data-theme')==='light' ? light : dark;
+  return arr[i % arr.length];
+}
+
+/* ===== New / Continue ===== */
+function newGame(){
+  cancelLoop(); bindInput(); showPlay(); fitCanvas();
+  const rng = makeRNG();
+  game = {
+    seed: (Math.random()*1e9)|0, rngSeed: (Math.random()*1e9)|0,
+    level: 0, score: 0, perfects:0, streak:0,
+    assists: ASSISTS, revive: REVIVES,
+    speed: BASE_SPEED, dir: 1,
+    baseY: canvas.height - 80,
+    stack: [], moving: null, paletteIdx: 0
+  };
+  // base block
+  const w0 = Math.floor(canvas.width*0.7), x0 = Math.floor((canvas.width - w0)/2);
+  game.stack.push({x:x0,y:game.baseY,w:w0,color:pickColor(0)});
+  spawnNext();
+  paused=false;
+  loopStart();
+  saveRun();
+}
+function continueGame(){
+  const save = store.get(SAVE_KEY,null);
+  if(!save) return;
+  cancelLoop(); bindInput(); showPlay(); fitCanvas();
+  game = save;
+  // realign if viewport changed
+  adjustCamera();
+  paused=false;
+  loopStart();
+}
+
+/* ===== Input ===== */
+function bindInput(){
+  if(!clickBound){
+    canvas.addEventListener('mousedown', onTap);
+    canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); onTap(); }, {passive:false});
+    clickBound=true;
+  }
+  if(!keyHandler){
+    keyHandler = (e)=>{ if(e.code==='Space'){ e.preventDefault(); onTap(); } if(e.key.toLowerCase()==='p'){ togglePause(); } };
+    document.addEventListener('keydown', keyHandler);
+  }
+}
+function unbindInput(){
+  if(clickBound){
+    canvas.removeEventListener('mousedown', onTap);
+    canvas.removeEventListener('touchstart', onTap);
+    clickBound=false;
+  }
+  if(keyHandler){
+    document.removeEventListener('keydown', keyHandler);
+    keyHandler=null;
+  }
+}
+
+/* ===== Spawning / Gameplay ===== */
+function spawnNext(){
+  const last = game.stack[game.stack.length-1];
+  const y = last.y - (BLOCK_H + 6);
+  const w = last.w;
+  const color = pickColor(++game.paletteIdx);
+  const off = Math.max(30, Math.floor(canvas.width*0.12));
+  const x = (game.dir>0) ? -off : canvas.width - w + off;
+  game.moving = {x, y, w, color};
+  game.level++;
+  game.speed = Math.min(BASE_SPEED + 1.0, game.speed + SPEED_RAMP * (10 + game.level));
+}
+function onTap(){
+  if(!game || paused) return;
+  SFX.drop();
+  dropBlock();
+}
+function dropBlock(){
+  const last = game.stack[game.stack.length-1], cur = game.moving; if(!cur) return;
+
+  const tolBoost = Math.max(0, EDGE_TOL_EARLY - game.level);
+  const left = Math.max(last.x, cur.x);
+  const right = Math.min(last.x + last.w, cur.x + cur.w);
+  let overlap = right - left;
+
+  // assist if close
+  const off = Math.abs((cur.x + cur.w/2) - (last.x + last.w/2));
+  if (game.assists>0 && off < 18 && overlap <= 0){ cur.x = last.x; overlap = Math.min(cur.w, last.w); game.assists--; SFX.edge(); }
+
+  if (overlap <= 0 && tolBoost>0){
+    if (Math.abs(cur.x - last.x) <= tolBoost){
+      overlap = Math.max(10, Math.min(cur.w, last.w) * 0.15);
+      cur.x = (cur.x < last.x) ? last.x : (last.x + last.w - overlap);
+      SFX.edge();
+    }
+  }
+
+  if (overlap <= 0){
+    if (game.revive>0){
+      game.revive=0;
+      const mercy = Math.max(16, Math.floor(Math.min(cur.w, last.w)*0.5));
+      cur.x = last.x + Math.floor((last.w - mercy)/2);
+      cur.w = mercy; overlap = mercy; SFX.edge();
+    } else {
+      SFX.fail(); return gameOver();
+    }
+  }
+
+  const perfect = Math.abs(cur.x - last.x) <= PERFECT_TOL && cur.w===last.w;
+  if (perfect){
+    game.streak++; game.perfects++; SFX.perfect();
+    if (game.streak % 3 === 0){ cur.x = Math.max(0, cur.x-2); cur.w = Math.min(last.w+4, Math.floor(canvas.width*0.9)); }
+    showStreak();
+  } else { game.streak=0; hideStreak(); cur.x = left; cur.w = Math.max(10, Math.floor(overlap)); }
+
+  game.stack.push({x:cur.x, y:cur.y, w:cur.w, color:cur.color});
+  game.score += 10 + (perfect ? 5 + game.streak*2 : 0);
+  game.moving=null; game.dir *= -1;
+
+  adjustCamera();
+  saveRun();
+  spawnNext();
+}
+function adjustCamera(){
+  // push stack down if near top to keep it centered
+  if(!game) return;
+  const topY = game.stack[game.stack.length-1]?.y ?? (canvas.height*0.6);
+  if (topY < canvas.height * 0.28){
+    const dy = Math.floor(canvas.height*0.18);
+    game.stack.forEach(b=> b.y += dy);
+    if (game.moving) game.moving.y += dy;
+  }
+}
+
+/* ===== Loop ===== */
+function loop(ts){
+  if(!game) return;
+  if(!lastTs) lastTs=ts;
+  const dt = Math.min(33, ts - lastTs); lastTs = ts;
+
+  if (game.moving && !paused){
+    game.moving.x += game.dir * game.speed * (dt/1.6);
+    if (game.dir>0 && game.moving.x + game.moving.w >= canvas.width){ game.moving.x = canvas.width - game.moving.w; game.dir = -1; SFX.edge(); }
+    if (game.dir<0 && game.moving.x <= 0){ game.moving.x = 0; game.dir = 1; SFX.edge(); }
+  }
+  draw();
+  raf = requestAnimationFrame(loop);
+}
+function loopStart(){ cancelLoop(); lastTs=0; raf = requestAnimationFrame(loop); }
+function cancelLoop(){ if(raf){ cancelAnimationFrame(raf); raf=0; } }
+
+/* ===== Draw ===== */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(255,255,255,.06)';
+  for(let i=0;i<5;i++){ const y = canvas.height*(0.25+i*0.12); ctx.fillRect(0,y,canvas.width,1); }
+
+  game.stack.forEach(b=>{ ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,BLOCK_H); ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(b.x,b.y,b.w,3); });
+  if (game.moving){ ctx.fillStyle=game.moving.color; ctx.fillRect(game.moving.x,game.moving.y,game.moving.w,BLOCK_H); ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(game.moving.x,game.moving.y,game.moving.w,3); }
+
+  qs('#score').textContent = Math.floor(game.score);
+}
+
+/* ===== Streak HUD ===== */
+function showStreak(){ const el=qs('#chipStreak'); qs('#streak').textContent=game.streak; el.style.display=''; }
+function hideStreak(){ qs('#chipStreak').style.display='none'; }
+
+/* ===== Pause / Save / Home ===== */
+function togglePause(){ if(!game) return; paused=!paused; qs('#pauseOverlay').style.display = paused ? 'flex':'none'; if(!paused) loopStart(); else saveRun(); }
+qs('#btnPause').onclick = togglePause;
+qs('#btnResume').onclick = togglePause;
+qs('#btnSave').onclick = ()=>{ saveRun(); toast('Saved ✔'); };
+qs('#btnHomeFromPause').onclick = ()=>{ if(game){ saveRun(); } showMenu(); };
+
+/* ===== Game Over ===== */
+function gameOver(){
+  LAST.perfects = game.perfects;
+  const sc = Math.floor(game.score);
+  if (sc > META.best){ META.best = sc; saveMeta(); }
+  qs('#overScore').textContent = sc;
+  qs('#overBest').textContent = META.best;
+  qs('#overPerfects').textContent = game.perfects;
+  clearSave(); // finished runs are not continuable
+  cancelLoop(); unbindInput();
+  new bootstrap.Modal('#overModal').show();
+}
+qs('#btnRestart').onclick = ()=>{ bootstrap.Modal.getInstance(qs('#overModal')).hide(); newGame(); };
+qs('#btnHomeFromOver').onclick = ()=>{ bootstrap.Modal.getInstance(qs('#overModal')).hide(); showMenu(); };
+
+/* ===== Saving ===== */
+function saveRun(){ if(game){ store.set(SAVE_KEY, game); } }
+function clearSave(){ store.del(SAVE_KEY); }
+
+/* ===== Wire menu buttons ===== */
+qs('#btnNew').onclick = newGame;
+qs('#btnContinue').onclick = continueGame;
+
+/* ===== Start at menu, prime stats ===== */
+qs('#bestMenu').textContent = META.best;
+qs('#perfMenu').textContent = LAST.perfects;
+qs('#btnContinue').disabled = !store.get(SAVE_KEY,null);
+showMenu();
+
+/* ===== Prevent refresh-loss: autosave snapshot if active ===== */
+window.addEventListener('beforeunload', ()=>{ if(game && !paused){ saveRun(); } });
+
+</script>
+</body>
+</html>
