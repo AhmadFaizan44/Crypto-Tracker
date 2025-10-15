@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MAGNIFICENT — AI Tools Directory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Curated AI tools with filters, ratings, and affiliate links. Pure HTML/CSS/JS."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0a0f1f; --bg-2:#0d1230; --card:#101735; --text:#e2e8f0; --muted:#94a3b8;
+      --glass: rgba(255,255,255,.06); --line: rgba(255,255,255,.12);
+      --accent:#7c5cff; --accent-2:#22d3ee; --success:#34d399; --danger:#ef4444; --gold:#f59e0b;
+      --shadow: 0 20px 40px rgba(0,0,0,.35);
+    }
+    [data-theme="light"]{
+      --bg:#f6f7fb; --bg-2:#ffffff; --card:#ffffff; --text:#0f172a; --muted:#475569;
+      --glass: rgba(17,24,39,.04); --line: rgba(2,6,23,.08); --accent:#5b5bd6; --accent-2:#0ea5e9;
+      --success:#059669; --danger:#dc2626; --gold:#d97706;
+      --shadow: 0 20px 40px rgba(2,6,23,.08);
+    }
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1300px 900px at -20% -30%, rgba(124,92,255,.25), transparent 60%) no-repeat,
+        radial-gradient(1000px 800px at 120% 10%, rgba(34,211,238,.18), transparent 60%) no-repeat,
+        var(--bg);
+      color: var(--text);
+    }
+    .navbar{ background: linear-gradient(180deg, rgba(13,19,48,.9), rgba(13,19,48,.7)); backdrop-filter: blur(10px); border-bottom:1px solid var(--line); }
+    [data-theme="light"] .navbar{ background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7)); }
+    .brand-badge{ background:linear-gradient(135deg,var(--accent),#4338ca); color:#fff; border-radius:14px; padding:.35rem .7rem; font-weight:800; letter-spacing:.5px; box-shadow: var(--shadow); }
+    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid var(--line); border-radius:18px; box-shadow: var(--shadow); }
+    .hero{ background: radial-gradient(1200px 500px at 80% -20%, rgba(124,92,255,.18), transparent 60%) no-repeat; }
+    .chip{ display:inline-flex; align-items:center; gap:.45rem; padding:.45rem .7rem; border-radius:999px; background:var(--glass); border:1px solid var(--line); font-size:.9rem; }
+    .btn-accent{ background:linear-gradient(135deg,var(--accent),#4338ca); color:#fff; border:none; box-shadow: var(--shadow); }
+    .btn-outline{ border:1px solid var(--line); background:var(--glass); color:var(--text); }
+    .tool-card{ transition: transform .25s ease, box-shadow .25s ease; }
+    .tool-card:hover{ transform: translateY(-4px); box-shadow: 0 25px 60px rgba(0,0,0,.35); }
+    .tool-logo{ width:44px;height:44px;border-radius:12px; background:linear-gradient(135deg,rgba(124,92,255,.25),rgba(34,211,238,.25)); display:grid; place-items:center; font-weight:800; }
+    .badge-soft{ background: rgba(255,255,255,.08); border:1px solid var(--line); color:var(--muted); }
+    .tag{ background: rgba(124,92,255,.15); border:1px solid rgba(124,92,255,.35); color:#dcd9ff; padding:.15rem .5rem; border-radius:999px; font-size:.75rem; }
+    [data-theme="light"] .tag{ color:#3f3a80; }
+    .rating i{ color:#fbbf24 }
+    .pricing-badge{ padding:.25rem .55rem; border-radius:8px; font-weight:700; }
+    .free{ background: rgba(52,211,153,.15); color:#34d399; border:1px solid rgba(52,211,153,.35); }
+    .freemium{ background: rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.35); }
+    .paid{ background: rgba(124,92,255,.15); color:#a78bfa; border:1px solid rgba(124,92,255,.35); }
+    .favorite{ color:#cbd5e1; }
+    .favorite.active{ color: var(--gold); }
+    .pill{ border:1px solid var(--line); background:var(--glass); border-radius:999px; padding:.4rem .7rem; }
+    .divider{ border-top:1px dashed var(--line); }
+    .sidebar-filters .form-select, .sidebar-filters .form-control{ background: rgba(255,255,255,.06); color:var(--text); border:1px solid var(--line); }
+    [data-theme="light"] .sidebar-filters .form-select, [data-theme="light"] .sidebar-filters .form-control{ background:#fff; }
+    .offcanvas{ background: var(--bg-2); color: var(--text); border-left:1px solid var(--line); }
+    .modal-content{ background: var(--bg-2); color: var(--text); border:1px solid var(--line); }
+    .skeleton{ position:relative; overflow:hidden; background:rgba(255,255,255,.05); border-radius:14px; }
+    .skeleton::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); animation: shimmer 1.2s infinite; }
+    @keyframes shimmer{ 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+    .toggle{ display:inline-flex; gap:.25rem; border:1px solid var(--line); border-radius:999px; padding:.25rem; background:var(--glass);}
+    .toggle button{ border:0; background:transparent; color:var(--muted); padding:.35rem .75rem; border-radius:999px;}
+    .toggle button.active{ background:var(--accent); color:#fff;}
+    .compare-dock{ position:fixed; right:16px; bottom:16px; left:16px; z-index:1030;}
+    .compare-card{ background:var(--bg-2); border:1px solid var(--line); border-radius:16px; box-shadow: var(--shadow); }
+    .table-compare td, .table-compare th{ border-color: var(--line) !important; }
+    .table-compare th{ color: var(--muted); font-weight:600; }
+  </style>
+</head>
+<body data-theme="dark">
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <span class="brand-badge">MAGNIFICENT</span>
+        <span class="fw-bold">AI Tools</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="toggle" id="themeToggle" role="tablist">
+          <button class="active" data-theme="dark" title="Dark"><i class="bi bi-moon-stars"></i></button>
+          <button data-theme="light" title="Light"><i class="bi bi-brightness-high"></i></button>
+        </div>
+        <button class="btn btn-outline btn-sm" data-bs-toggle="modal" data-bs-target="#submitModal"><i class="bi bi-plus-circle"></i> Submit a Tool</button>
+        <div class="dropdown">
+          <button class="btn btn-outline btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download"></i> Export</button>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="#" id="exportCSV">CSV (visible)</a></li>
+            <li><a class="dropdown-item" href="#" id="exportJSON">JSON (all)</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline btn-sm dropdown-toggle"><i class="bi bi-upload"></i> Import</button>
+          <ul class="dropdown-menu dropdown-menu-dark p-2" style="min-width:260px">
+            <li class="px-2 py-1 small">Import JSON catalog</li>
+            <li class="px-2"><input type="file" id="importFile" accept="application/json" class="form-control form-control-sm"></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO & CONTROLS -->
+  <header class="hero container py-4">
+    <div class="glass p-4 p-md-5">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+        <div>
+          <h1 class="display-6 fw-800 mb-2">Discover the best AI tools.</h1>
+          <p class="text-secondary mb-3">Search, filter, compare, and save your favorites. Add your affiliate links to monetize instantly.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="chip"><i class="bi bi-search"></i> Smart search</span>
+            <span class="chip"><i class="bi bi-sliders"></i> Multi-filters</span>
+            <span class="chip"><i class="bi bi-stars"></i> Ratings</span>
+            <span class="chip"><i class="bi bi-heart"></i> Favorites</span>
+            <span class="chip"><i class="bi bi-columns-gap"></i> Compare 3</span>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control" id="searchInput" placeholder="Search tool, feature, or tag…">
+          </div>
+          <select class="form-select" id="sortSelect" style="min-width:170px">
+            <option value="featured">Featured</option>
+            <option value="rating_desc">Rating ↓</option>
+            <option value="rating_asc">Rating ↑</option>
+            <option value="price_free_first">Free → Paid</option>
+            <option value="alpha_asc">Name A–Z</option>
+          </select>
+          <div class="pill">Tools: <span id="toolCount">0</span></div>
+          <div class="pill">Favorites: <span id="favCount">0</span></div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-3">
+        <div class="col-lg-3">
+          <div class="glass p-3 sidebar-filters">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>Filters</strong>
+              <button class="btn btn-sm btn-outline" id="clearFilters"><i class="bi bi-x-circle"></i> Clear</button>
+            </div>
+            <label class="form-label small">Category</label>
+            <select class="form-select mb-2" id="catSelect">
+              <option value="">All</option>
+              <option>Writing</option><option>Code</option><option>Image</option><option>Audio</option><option>Video</option><option>Productivity</option><option>Marketing</option>
+            </select>
+            <label class="form-label small">Pricing</label>
+            <select class="form-select mb-2" id="priceSelect">
+              <option value="">Any</option><option>Free</option><option>Freemium</option><option>Paid</option>
+            </select>
+            <label class="form-label small">Tags</label>
+            <input class="form-control mb-3" id="tagInput" placeholder="e.g., RAG, no-code, chrome">
+            <div class="divider my-3"></div>
+            <label class="form-label small">Page size</label>
+            <select class="form-select" id="pageSizeSelect">
+              <option>9</option><option selected>12</option><option>24</option><option>48</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-lg-9">
+          <div id="grid" class="row g-3">
+            <!-- Cards injected here -->
+          </div>
+          <nav class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-secondary small">Click a card to see details. Use ⭐ to favorite. Use ☐ to compare.</div>
+            <ul class="pagination mb-0" id="pagination"></ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- COMPARE DOCK -->
+  <div class="compare-dock container" id="compareDock" style="display:none;">
+    <div class="compare-card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-columns-gap"></i> Compare</strong>
+        <div>
+          <button class="btn btn-outline btn-sm" id="btnClearCompare"><i class="bi bi-x-circle"></i> Clear</button>
+          <button class="btn btn-accent btn-sm" id="btnOpenCompare"><i class="bi bi-arrow-up-right-square"></i> Open</button>
+        </div>
+      </div>
+      <div id="compareMini" class="d-flex gap-2 mt-2"></div>
+    </div>
+  </div>
+
+  <!-- TOOL DETAIL MODAL -->
+  <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><span id="dName">Tool</span> <span class="pricing-badge ms-2" id="dPricing"></span></h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex flex-column flex-lg-row gap-3">
+            <div class="flex-fill">
+              <div class="glass p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="tool-logo" id="dLogo">AI</div>
+                  <div>
+                    <div class="small text-secondary" id="dCategory">Category</div>
+                    <div class="rating" id="dRating">★★★★★</div>
+                  </div>
+                </div>
+                <p id="dTagline" class="mb-2">—</p>
+                <div id="dTags" class="d-flex flex-wrap gap-2 mb-2"></div>
+                <div class="small text-secondary"><strong>Features:</strong> <span id="dFeatures"></span></div>
+              </div>
+            </div>
+            <div style="min-width:260px" class="d-grid gap-2">
+              <a id="dVisit" class="btn btn-accent" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Visit Website</a>
+              <a id="dAff" class="btn btn-outline" target="_blank" rel="noopener"><i class="bi bi-currency-dollar"></i> Affiliate Link</a>
+              <button id="dFav" class="btn btn-outline"><i class="bi bi-star"></i> Favorite</button>
+              <button id="dCompare" class="btn btn-outline"><i class="bi bi-square"></i> Add to Compare</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL COMPARE MODAL -->
+  <div class="modal fade" id="compareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-columns-gap"></i> Compare Tools</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-compare align-middle">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th id="cmp0">—</th>
+                  <th id="cmp1">—</th>
+                  <th id="cmp2">—</th>
+                </tr>
+              </thead>
+              <tbody id="compareTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT TOOL MODAL -->
+  <div class="modal fade" id="submitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Submit a Tool</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-12"><input class="form-control" id="sName" placeholder="Name *"></div>
+            <div class="col-12"><input class="form-control" id="sTagline" placeholder="Tagline *"></div>
+            <div class="col-md-6"><input class="form-control" id="sCategory" placeholder="Category (e.g., Writing)"></div>
+            <div class="col-md-6">
+              <select class="form-select" id="sPricing">
+                <option>Free</option><option>Freemium</option><option>Paid</option>
+              </select>
+            </div>
+            <div class="col-12"><input class="form-control" id="sWebsite" placeholder="Website URL (https://)"></div>
+            <div class="col-12"><input class="form-control" id="sAffiliate" placeholder="Affiliate URL (optional)"></div>
+            <div class="col-12"><input class="form-control" id="sTags" placeholder="Tags (comma separated)"></div>
+            <div class="col-12"><input class="form-control" id="sFeatures" placeholder="Key features (comma separated)"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-accent" id="btnSubmitTool">Add Tool</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOTSTRAP -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    /* =========================
+       Demo Dataset (editable)
+       ========================= */
+    const DEMO_TOOLS = [
+      {id:'scribe', name:'Scribe', tagline:'Turn processes into step-by-step guides, instantly.', category:'Productivity', pricing:'Freemium', rating:4.8, upvotes:4200,
+        website:'https://scribehow.com', affiliate:'https://your-affiliate.example/scribe', logo:'', tags:['SOP','Docs','Chrome'], features:['Auto-capture','Redaction','Export PDF/HTML']},
+      {id:'copygen', name:'CopyGen', tagline:'Conversion-tuned copy for ads, emails, and landing pages.', category:'Marketing', pricing:'Paid', rating:4.6, upvotes:1800,
+        website:'https://copygen.example', affiliate:'https://your-affiliate.example/copygen', logo:'', tags:['Ads','Emails','Briefs'], features:['A/B outlines','Tone control','Team library']},
+      {id:'sketchai', name:'SketchAI', tagline:'Sketch-to-image magic for designers and creatives.', category:'Image', pricing:'Freemium', rating:4.7, upvotes:3500,
+        website:'https://sketchai.example', affiliate:'https://your-affiliate.example/sketchai', logo:'', tags:['Sketch','Diffusion','Masking'], features:['Inpainting','Upscale','Styles']},
+      {id:'audioroom', name:'AudioRoom', tagline:'Studio-grade podcast editing in your browser.', category:'Audio', pricing:'Freemium', rating:4.5, upvotes:2200,
+        website:'https://audioroom.example', affiliate:'', logo:'', tags:['Podcast','Noise remove','Transcripts'], features:['Auto-um removal','Leveling','Chapters']},
+      {id:'devpilot', name:'DevPilot', tagline:'AI pair programmer that understands your repo.', category:'Code', pricing:'Paid', rating:4.9, upvotes:7800,
+        website:'https://devpilot.example', affiliate:'https://your-affiliate.example/devpilot', logo:'', tags:['Autocomplete','Explain','Refactor'], features:['Inline chat','Test hints','Context awareness']},
+      {id:'vidboost', name:'VidBoost', tagline:'Captioned social videos from long clips in seconds.', category:'Video', pricing:'Freemium', rating:4.4, upvotes:1400,
+        website:'https://vidboost.example', affiliate:'', logo:'', tags:['Subtitles','Shorts','Templates'], features:['Auto cut','Karaoke captions','Brand kit']},
+      {id:'promptpad', name:'PromptPad', tagline:'Organize, version, and share prompts like a pro.', category:'Productivity', pricing:'Free', rating:4.3, upvotes:900,
+        website:'https://promptpad.example', affiliate:'', logo:'', tags:['Prompts','Versioning','Share'], features:['Folders','Variables','History']},
+      {id:'brandcraft', name:'BrandCraft', tagline:'Logo & brand kits generated from your brief.', category:'Design', pricing:'Paid', rating:4.2, upvotes:1200,
+        website:'https://brandcraft.example', affiliate:'https://your-affiliate.example/brandcraft', logo:'', tags:['Logos','Palettes','Mockups'], features:['Multiple styles','SVG export','Font pairing']},
+      {id:'talkwrite', name:'TalkWrite', tagline:'Speak ideas, get structured docs back.', category:'Writing', pricing:'Freemium', rating:4.5, upvotes:2100,
+        website:'https://talkwrite.example', affiliate:'', logo:'', tags:['Voice','Notes','Docs'], features:['Outline first','Citations','Templates']},
+      {id:'snapqa', name:'SnapQA', tagline:'Answer banks & study assistants for students.', category:'Productivity', pricing:'Free', rating:4.1, upvotes:700,
+        website:'https://snapqa.example', affiliate:'', logo:'', tags:['Flashcards','MCQ','Explain'], features:['Quiz sets','Spaced repetition','Progress']}];
+
+    /* =========================
+       Storage & State
+       ========================= */
+    const LS_KEYS = { catalog:'ai_dir_catalog', favorites:'ai_dir_favs', compare:'ai_dir_compare', theme:'ai_dir_theme' };
+    const els = {
+      grid: document.getElementById('grid'),
+      toolCount: document.getElementById('toolCount'),
+      favCount: document.getElementById('favCount'),
+      searchInput: document.getElementById('searchInput'),
+      sortSelect: document.getElementById('sortSelect'),
+      catSelect: document.getElementById('catSelect'),
+      priceSelect: document.getElementById('priceSelect'),
+      tagInput: document.getElementById('tagInput'),
+      clearFilters: document.getElementById('clearFilters'),
+      pageSizeSelect: document.getElementById('pageSizeSelect'),
+      pagination: document.getElementById('pagination'),
+      // detail
+      dName: document.getElementById('dName'), dPricing: document.getElementById('dPricing'), dLogo: document.getElementById('dLogo'),
+      dCategory: document.getElementById('dCategory'), dRating: document.getElementById('dRating'), dTagline: document.getElementById('dTagline'),
+      dTags: document.getElementById('dTags'), dFeatures: document.getElementById('dFeatures'), dVisit: document.getElementById('dVisit'),
+      dAff: document.getElementById('dAff'), dFav: document.getElementById('dFav'), dCompare: document.getElementById('dCompare'),
+      // compare
+      compareDock: document.getElementById('compareDock'), compareMini: document.getElementById('compareMini'),
+      cmp0: document.getElementById('cmp0'), cmp1: document.getElementById('cmp1'), cmp2: document.getElementById('cmp2'),
+      compareTableBody: document.getElementById('compareTableBody'),
+      btnOpenCompare: document.getElementById('btnOpenCompare'), btnClearCompare: document.getElementById('btnClearCompare'),
+      // submit
+      sName: document.getElementById('sName'), sTagline: document.getElementById('sTagline'), sCategory: document.getElementById('sCategory'),
+      sPricing: document.getElementById('sPricing'), sWebsite: document.getElementById('sWebsite'), sAffiliate: document.getElementById('sAffiliate'),
+      sTags: document.getElementById('sTags'), sFeatures: document.getElementById('sFeatures'), btnSubmitTool: document.getElementById('btnSubmitTool'),
+      // export/import
+      exportCSV: document.getElementById('exportCSV'), exportJSON: document.getElementById('exportJSON'), importFile: document.getElementById('importFile'),
+      // theme
+      themeToggle: document.getElementById('themeToggle')
+    };
+
+    let state = { query:'', category:'', pricing:'', tags:[], sort:'featured', page:1, pageSize:12, detailId:null };
+
+    function loadCatalog(){ try{ return JSON.parse(localStorage.getItem(LS_KEYS.catalog) || '[]'); }catch{ return []; } }
+    function saveCatalog(arr){ localStorage.setItem(LS_KEYS.catalog, JSON.stringify(arr)); }
+    function getCatalog(){ const base = loadCatalog(); return base.length ? base : DEMO_TOOLS.slice(); }
+    function getFavs(){ try{ return new Set(JSON.parse(localStorage.getItem(LS_KEYS.favorites) || '[]')); }catch{ return new Set(); } }
+    function setFavs(set){ localStorage.setItem(LS_KEYS.favorites, JSON.stringify([...set])); }
+    function getCompare(){ try{ return JSON.parse(localStorage.getItem(LS_KEYS.compare) || '[]'); }catch{ return []; } }
+    function setCompare(arr){ localStorage.setItem(LS_KEYS.compare, JSON.stringify(arr.slice(0,3))); }
+
+    /* =========================
+       Helpers
+       ========================= */
+    function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+    function clsPrice(p){ return p==='Free'?'free':p==='Paid'?'paid':'freemium'; }
+    function logoHTML(name){ const letter = (name||'A').trim()[0]?.toUpperCase() || 'A'; return `<div class="tool-logo">${letter}</div>`; }
+    function stars(r){ const full = Math.round(r); return '★'.repeat(full) + '<span class="text-secondary"> ('+r.toFixed(1)+')</span>'; }
+    function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+    function download(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); }
+    function fmtNum(n){ return new Intl.NumberFormat().format(n||0); }
+
+    /* =========================
+       Filter + Sort + Paginate
+       ========================= */
+    function filterSortPaginate(){
+      const favs = getFavs();
+      let list = getCatalog();
+      // filter
+      const q = state.query.toLowerCase();
+      const tags = state.tags.map(t=>t.toLowerCase());
+      list = list.filter(t=>{
+        const hay = (t.name+' '+t.tagline+' '+(t.tags||[]).join(' ')+' '+(t.features||[]).join(' ')).toLowerCase();
+        const matchQ = !q || hay.includes(q);
+        const matchCat = !state.category || t.category===state.category;
+        const matchPrice = !state.pricing || t.pricing===state.pricing;
+        const matchTags = !tags.length || tags.every(x => hay.includes(x));
+        return matchQ && matchCat && matchPrice && matchTags;
+      });
+      // sort
+      switch(state.sort){
+        case 'rating_desc': list.sort((a,b)=> b.rating - a.rating || b.upvotes - a.upvotes); break;
+        case 'rating_asc': list.sort((a,b)=> a.rating - b.rating || a.upvotes - b.upvotes); break;
+        case 'price_free_first': list.sort((a,b)=> (a.pricing==='Free'?0:a.pricing==='Freemium'?1:2) - (b.pricing==='Free'?0:b.pricing==='Freemium'?1:2) || b.rating-a.rating ); break;
+        case 'alpha_asc': list.sort((a,b)=> a.name.localeCompare(b.name)); break;
+        default: list.sort((a,b)=> b.upvotes - a.upvotes || b.rating - a.rating); // featured
+      }
+      // paginate
+      const total = list.length;
+      const pages = Math.max(1, Math.ceil(total / state.pageSize));
+      state.page = Math.min(state.page, pages);
+      const start = (state.page - 1) * state.pageSize;
+      const rows = list.slice(start, start + state.pageSize);
+      return {rows, total, pages, all:list, favs};
+    }
+
+    /* =========================
+       Render Grid & Pagination
+       ========================= */
+    function render(){
+      const {rows, total, pages, all, favs} = filterSortPaginate();
+      els.toolCount.textContent = total;
+      els.favCount.textContent = favs.size;
+
+      // cards
+      els.grid.innerHTML = rows.map(t => `
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="glass p-3 h-100 tool-card" data-open="${t.id}" style="cursor:pointer">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="d-flex align-items-center gap-2">
+                ${logoHTML(t.name)}
+                <div>
+                  <h6 class="mb-0 fw-bold">${t.name}</h6>
+                  <div class="small text-secondary">${t.category}</div>
+                </div>
+              </div>
+              <span class="pricing-badge ${clsPrice(t.pricing)}">${t.pricing}</span>
+            </div>
+            <p class="text-secondary mt-2 mb-2">${t.tagline}</p>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              ${(t.tags||[]).slice(0,4).map(s=>`<span class="tag">${s}</span>`).join('')}
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="rating">${stars(t.rating)}</div>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline" data-compare="${t.id}" title="Add to compare"><i class="bi bi-square"></i></button>
+                <button class="btn btn-sm btn-outline favorite ${favs.has(t.id)?'active':''}" data-fav="${t.id}" title="Favorite"><i class="bi ${favs.has(t.id)?'bi-star-fill':'bi-star'}"></i></button>
+                <a href="${t.affiliate||t.website}" target="_blank" rel="noopener" class="btn btn-sm btn-accent"><i class="bi bi-box-arrow-up-right"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // open detail
+      els.grid.querySelectorAll('[data-open]').forEach(card=>{
+        card.addEventListener('click', e=>{
+          const id = card.getAttribute('data-open');
+          openDetail(id);
+        });
+      });
+      // prevent bubbling on inner buttons
+      els.grid.querySelectorAll('button, a').forEach(el=>{
+        el.addEventListener('click', ev=> ev.stopPropagation());
+      });
+
+      // fav & compare buttons
+      els.grid.querySelectorAll('[data-fav]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-fav');
+          toggleFav(id); render();
+        });
+      });
+      els.grid.querySelectorAll('[data-compare]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const id = btn.getAttribute('data-compare');
+          toggleCompare(id); renderCompareDock();
+        });
+      });
+
+      // pagination
+      let html = '';
+      function pageItem(n,label=n,active=false,disabled=false){
+        return `<li class="page-item ${active?'active':''} ${disabled?'disabled':''}"><a href="#" class="page-link" data-page="${n}">${label}</a></li>`;
+      }
+      html += pageItem(Math.max(1, state.page-1), '&laquo;', false, state.page===1);
+      const range=2, start=Math.max(1,state.page-range), end=Math.min(pages,state.page+range);
+      for (let i=start;i<=end;i++) html += pageItem(i, i, i===state.page, false);
+      html += pageItem(Math.min(pages, state.page+1), '&raquo;', false, state.page===pages);
+      els.pagination.innerHTML = html;
+      els.pagination.querySelectorAll('a[data-page]').forEach(a=>{
+        a.addEventListener('click', e=>{
+          e.preventDefault(); state.page = parseInt(a.getAttribute('data-page')); render();
+        });
+      });
+    }
+
+    /* =========================
+       Detail Modal
+       ========================= */
+    function openDetail(id){
+      const t = getCatalog().find(x=>x.id===id); if (!t) return;
+      state.detailId = id;
+      els.dName.textContent = t.name;
+      els.dPricing.className = 'pricing-badge ' + clsPrice(t.pricing);
+      els.dPricing.textContent = t.pricing;
+      els.dLogo.innerHTML = logoHTML(t.name);
+      els.dCategory.textContent = t.category;
+      els.dRating.innerHTML = stars(t.rating);
+      els.dTagline.textContent = t.tagline;
+      els.dTags.innerHTML = (t.tags||[]).map(s=>`<span class="tag">${s}</span>`).join('');
+      els.dFeatures.textContent = (t.features||[]).join(' • ') || '—';
+      els.dVisit.href = t.website || '#';
+      els.dAff.href = t.affiliate || t.website || '#';
+      els.dAff.style.display = t.affiliate ? '' : 'none';
+      // fav/compare buttons
+      const favs = getFavs();
+      els.dFav.innerHTML = `<i class="bi ${favs.has(t.id)?'bi-star-fill':'bi-star'}"></i> ${favs.has(t.id)?'Favorited':'Favorite'}`;
+      els.dFav.onclick = ()=>{ toggleFav(t.id); openDetail(t.id); render(); };
+      els.dCompare.onclick = ()=>{ toggleCompare(t.id); renderCompareDock(); };
+      new bootstrap.Modal(document.getElementById('detailModal')).show();
+    }
+
+    /* =========================
+       Favorites
+       ========================= */
+    function toggleFav(id){
+      const favs = getFavs();
+      favs.has(id) ? favs.delete(id) : favs.add(id);
+      setFavs(favs);
+    }
+
+    /* =========================
+       Compare (max 3)
+       ========================= */
+    function toggleCompare(id){
+      const arr = getCompare();
+      const idx = arr.indexOf(id);
+      if (idx>=0) arr.splice(idx,1);
+      else if (arr.length<3) arr.push(id);
+      setCompare(arr);
+    }
+    function renderCompareDock(){
+      const arr = getCompare();
+      if (!arr.length){ els.compareDock.style.display='none'; els.compareMini.innerHTML=''; return; }
+      els.compareDock.style.display='';
+      const cat = getCatalog();
+      els.compareMini.innerHTML = arr.map(id=>{
+        const t = cat.find(x=>x.id===id);
+        return `<span class="chip"><strong>${t?.name||id}</strong><button class="btn btn-sm btn-outline" data-rem="${id}"><i class="bi bi-x"></i></button></span>`;
+      }).join('');
+      els.compareMini.querySelectorAll('[data-rem]').forEach(b=>{
+        b.addEventListener('click', ()=>{ toggleCompare(b.getAttribute('data-rem')); renderCompareDock(); });
+      });
+    }
+
+    // Open full compare
+    document.getElementById('btnOpenCompare').addEventListener('click', ()=>{
+      const ids = getCompare();
+      const cat = getCatalog();
+      const items = ids.map(id => cat.find(x=>x.id===id)).filter(Boolean);
+      [els.cmp0,els.cmp1,els.cmp2].forEach((th,i)=> th.textContent = items[i]?.name || '—');
+      const metrics = [
+        ['Category', 'category'],
+        ['Pricing', 'pricing'],
+        ['Rating', t=> t.rating?.toFixed(1)],
+        ['Upvotes', t=> fmtNum(t.upvotes)],
+        ['Tags', t=> (t.tags||[]).join(', ')],
+        ['Features', t=> (t.features||[]).join(', ')],
+        ['Website', t=> t.website ? t.website.replace(/^https?:\/\//,'') : '—'],
+      ];
+      els.compareTableBody.innerHTML = metrics.map(([label, key])=>{
+        const cells = [0,1,2].map(i=>{
+          const t = items[i];
+          let val = '—';
+          if (typeof key === 'string') val = t?.[key] ?? '—';
+          else val = t ? key(t) : '—';
+          return `<td>${val || '—'}</td>`;
+        }).join('');
+        return `<tr><th>${label}</th>${cells}</tr>`;
+      }).join('');
+      new bootstrap.Modal(document.getElementById('compareModal')).show();
+    });
+    document.getElementById('btnClearCompare').addEventListener('click', ()=>{ setCompare([]); renderCompareDock(); });
+
+    /* =========================
+       Submit Tool
+       ========================= */
+    els.btnSubmitTool.addEventListener('click', ()=>{
+      const tool = {
+        id: slug(els.sName.value.trim() || ('tool-'+Math.random().toString(36).slice(2))),
+        name: els.sName.value.trim(),
+        tagline: els.sTagline.value.trim(),
+        category: els.sCategory.value.trim() || 'Productivity',
+        pricing: els.sPricing.value,
+        rating: 4.0, upvotes: 1,
+        website: els.sWebsite.value.trim(), affiliate: els.sAffiliate.value.trim(),
+        tags: (els.sTags.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        features: (els.sFeatures.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        logo:''
+      };
+      if (!tool.name || !tool.tagline){ alert('Name and Tagline are required.'); return; }
+      const catalog = getCatalog();
+      catalog.unshift(tool);
+      saveCatalog(catalog);
+      document.querySelector('#submitModal .btn-close').click();
+      // clear form
+      ['sName','sTagline','sCategory','sWebsite','sAffiliate','sTags','sFeatures'].forEach(id=> els[id].value='');
+      render();
+    });
+
+    /* =========================
+       Export / Import
+       ========================= */
+    els.exportCSV.addEventListener('click', ()=>{
+      const {all} = filterSortPaginate();
+      const headers = ['Name','Tagline','Category','Pricing','Rating','Upvotes','Tags','Features','Website','Affiliate'];
+      const rows = all.map(t=>[
+        t.name, t.tagline, t.category, t.pricing, t.rating, t.upvotes,
+        (t.tags||[]).join('|'), (t.features||[]).join('|'), t.website||'', t.affiliate||''
+      ]);
+      const csv = [headers, ...rows].map(r=> r.map(v=>`"${(v??'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+      download('ai_tools_visible.csv', csv, 'text/csv;charset=utf-8;');
+    });
+    els.exportJSON.addEventListener('click', ()=>{
+      const data = getCatalog();
+      download('ai_tools_catalog.json', JSON.stringify(data, null, 2), 'application/json');
+    });
+    els.importFile.addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data)) throw new Error('Invalid JSON (expected array)');
+          saveCatalog(data);
+          alert('Import successful.'); render();
+        }catch(err){ alert('Import failed: ' + err.message); }
+      };
+      reader.readAsText(file);
+    });
+
+    /* =========================
+       Theme
+       ========================= */
+    function setTheme(theme){
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem(LS_KEYS.theme, theme);
+      els.themeToggle.querySelectorAll('button').forEach(b=> b.classList.toggle('active', b.getAttribute('data-theme')===theme));
+    }
+    els.themeToggle.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=> setTheme(b.getAttribute('data-theme')));
+    });
+
+    /* =========================
+       Controls
+       ========================= */
+    els.searchInput.addEventListener('input', debounce(()=>{
+      state.query = els.searchInput.value.trim().toLowerCase(); state.page=1; render();
+    }, 200));
+    els.sortSelect.addEventListener('change', ()=>{ state.sort = els.sortSelect.value; render(); });
+    els.catSelect.addEventListener('change', ()=>{ state.category = els.catSelect.value; state.page=1; render(); });
+    els.priceSelect.addEventListener('change', ()=>{ state.pricing = els.priceSelect.value; state.page=1; render(); });
+    els.tagInput.addEventListener('keydown', (e)=>{ if (e.key==='Enter'){ state.tags = els.tagInput.value.split(',').map(s=>s.trim()).filter(Boolean); state.page=1; render(); }});
+    els.clearFilters.addEventListener('click', ()=>{
+      state.query=''; state.category=''; state.pricing=''; state.tags=[]; state.page=1;
+      els.searchInput.value=''; els.catSelect.value=''; els.priceSelect.value=''; els.tagInput.value='';
+      render();
+    });
+    els.pageSizeSelect.addEventListener('change', ()=>{ state.pageSize = parseInt(els.pageSizeSelect.value); state.page=1; render(); });
+
+    /* =========================
+       Init
+       ========================= */
+    (function init(){
+      // theme
+      const savedTheme = localStorage.getItem(LS_KEYS.theme) || 'dark';
+      setTheme(savedTheme);
+      // boot
+      if (!loadCatalog().length) saveCatalog(DEMO_TOOLS);
+      render(); renderCompareDock();
+    })();
+  </script>
+</body>
+</html>
