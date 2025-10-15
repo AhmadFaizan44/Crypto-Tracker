@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Magnificent Learning Hub — HTML/CSS/JS Only</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --card: #111731;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #7c5cff;
+      --accent-2: #22d3ee;
+      --success: #34d399;
+      --danger: #ef4444;
+      --gold: #f59e0b;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --glass: rgba(255,255,255,0.06);
+    }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 1200px at -10% -10%, #1b2754 0%, var(--bg) 45%) fixed, var(--bg);
+      color: var(--text);
+    }
+    .navbar{
+      background: linear-gradient(180deg, rgba(12,19,45,.9), rgba(12,19,45,.75)) !important;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .brand-badge{
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color:#fff; border-radius:14px; padding:.35rem .75rem; font-weight:800; letter-spacing:.5px;
+      box-shadow: var(--shadow);
+    }
+    .hero{
+      background: radial-gradient(1200px 500px at 80% -20%, rgba(124,92,255,.25), transparent 60%) no-repeat;
+    }
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .stat-chip{
+      display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:999px;
+      background: var(--glass); border:1px solid rgba(255,255,255,.08);
+    }
+    .pill{ border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); border-radius:999px; padding:.4rem .7rem; }
+    .btn-accent{
+      background: linear-gradient(135deg, var(--accent), #4338ca);
+      color:#fff; border:none; box-shadow: var(--shadow);
+    }
+    .btn-outline-light{ border-color: rgba(255,255,255,.3); }
+    .rating i{ color: #fbbf24; }
+    .course-card .badge{ background: rgba(34,211,238,.12); border:1px solid rgba(34,211,238,.3); color:#cfefff; }
+    .progress{ background: rgba(255,255,255,.08); height:10px; }
+    .progress-bar{ background: linear-gradient(90deg, var(--accent), var(--success)); }
+
+    /* Viewer */
+    #viewerWrap{ display:none; }
+    .sidebar{
+      background: #0e1530; border-right:1px solid rgba(255,255,255,.08); border-radius: 12px;
+      max-height: 75vh; overflow:auto;
+    }
+    .lesson-item{ padding:.6rem .75rem; border-radius:10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+    .lesson-item.active{ background: rgba(124,92,255,.18); border:1px solid rgba(124,92,255,.45); }
+    .lesson-item.completed .bi-check2-circle{ color: var(--success); }
+    .note-area{ background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:12px; }
+    .badge-soft{ background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); color:#cbd5e1; }
+
+    /* Modal styles */
+    .modal-content{ background:#0e1530; color:#e5e7eb; border:1px solid rgba(255,255,255,.1); }
+
+    @media (max-width: 992px){
+      .sidebar{ max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <span class="brand-badge">MAGNIFICENT</span>
+        <span class="fw-bold">Learning Hub</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="pill d-none d-md-inline">Learner: <span id="learnerName" class="fw-semibold ms-1">Guest</span></div>
+        <button class="btn btn-outline-light btn-sm" id="changeNameBtn"><i class="bi bi-person"></i> Set Name</button>
+        <div class="dropdown">
+          <button class="btn btn-outline-light dropdown-toggle btn-sm" data-bs-toggle="dropdown"><i class="bi bi-download"></i> Export</button>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="#" id="exportJSON">Progress as JSON</a></li>
+            <li><a class="dropdown-item" href="#" id="exportCSV">Progress as CSV</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-light dropdown-toggle btn-sm" data-bs-toggle="dropdown"><i class="bi bi-upload"></i> Import</button>
+          <ul class="dropdown-menu dropdown-menu-dark p-2" style="min-width:260px">
+            <li class="px-2 py-1 small">Import JSON progress</li>
+            <li class="px-2"><input type="file" id="importFile" accept="application/json" class="form-control form-control-sm"></li>
+          </ul>
+        </div>
+        <div class="btn-group" role="group" aria-label="view toggle">
+          <button class="btn btn-accent btn-sm" id="viewCatalog"><i class="bi bi-grid-3x3-gap"></i> Catalog</button>
+          <button class="btn btn-outline-light btn-sm" id="viewMyCourses"><i class="bi bi-collection"></i> My Courses</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero container py-4">
+    <div class="glass p-4 p-md-5">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+        <div>
+          <h1 class="display-6 fw-800 mb-2">Build skills. Learn fast. Track progress.</h1>
+          <p class="text-secondary mb-3">Beautiful, front-end-only learning hub with lessons, quizzes, notes, progress, and certificates — all saved in your browser.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="stat-chip"><i class="bi bi-lightning-charge"></i> No backend</span>
+            <span class="stat-chip"><i class="bi bi-mortarboard"></i> Quizzes & Certificates</span>
+            <span class="stat-chip"><i class="bi bi-hdd"></i> Local progress</span>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control" id="searchInput" placeholder="Search course or topic…">
+          </div>
+          <select class="form-select" id="categorySelect" style="min-width:160px">
+            <option value="">All Categories</option>
+            <option>Programming</option>
+            <option>Design</option>
+            <option>Business</option>
+            <option>Productivity</option>
+          </select>
+          <select class="form-select" id="difficultySelect" style="min-width:140px">
+            <option value="">All Levels</option>
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+          <select class="form-select" id="sortSelect" style="min-width:160px">
+            <option value="featured">Featured</option>
+            <option value="rating_desc">Rating ↓</option>
+            <option value="rating_asc">Rating ↑</option>
+            <option value="duration_asc">Duration ↑</option>
+            <option value="duration_desc">Duration ↓</option>
+          </select>
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+        <span class="pill">Courses: <span id="courseCount">0</span></span>
+        <span class="pill">Enrolled: <span id="enrolledCount">0</span></span>
+        <span class="pill">Completed: <span id="completedCount">0</span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CATALOG -->
+  <main class="container my-4" id="catalogWrap">
+    <div class="row g-3" id="coursesGrid"></div>
+  </main>
+
+  <!-- MY COURSES -->
+  <section class="container my-4" id="myCoursesWrap" style="display:none;">
+    <div class="glass p-3 p-md-4">
+      <h4 class="mb-3">My Courses</h4>
+      <div id="myCoursesList" class="row g-3"></div>
+      <div class="text-secondary small mt-3">Tip: Finish all lessons + pass quizzes to unlock your certificate.</div>
+    </div>
+  </section>
+
+  <!-- VIEWER -->
+  <section class="container my-4" id="viewerWrap">
+    <div class="glass p-3 p-md-4">
+      <div class="d-flex flex-column flex-lg-row gap-3">
+        <!-- Sidebar -->
+        <aside class="sidebar p-3 col-lg-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              <div class="small text-secondary">Course</div>
+              <div class="fw-bold" id="vCourseTitle">—</div>
+            </div>
+            <span class="badge badge-soft" id="vCourseLevel">—</span>
+          </div>
+          <div class="mb-2 small text-secondary" id="vCourseMeta">—</div>
+          <div class="progress mb-3"><div class="progress-bar" id="vCourseProgress" style="width:0%"></div></div>
+          <div id="lessonList" class="d-grid gap-2"></div>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-outline-light btn-sm flex-fill" id="btnBackCatalog"><i class="bi bi-arrow-left"></i> Back</button>
+            <button class="btn btn-accent btn-sm flex-fill" id="btnCertificate" disabled><i class="bi bi-award"></i> Certificate</button>
+          </div>
+        </aside>
+
+        <!-- Content -->
+        <article class="flex-fill">
+          <div class="p-3 glass">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="small text-secondary">Lesson</div>
+                <h4 id="vLessonTitle" class="mb-1">—</h4>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-light btn-sm" id="btnPrev"><i class="bi bi-chevron-left"></i> Prev</button>
+                <button class="btn btn-outline-light btn-sm" id="btnNext">Next <i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+            <hr>
+            <div id="vLessonBody" class="mb-3" style="min-height:160px;">—</div>
+
+            <div id="quizWrap" class="mt-3" style="display:none;">
+              <h6><i class="bi bi-patch-question"></i> Quiz</h6>
+              <form id="quizForm" class="d-grid gap-2"></form>
+              <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-outline-light btn-sm" id="btnCheckAnswers"><i class="bi bi-clipboard2-check"></i> Check</button>
+                <span class="small text-secondary" id="quizStatus">—</span>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h6><i class="bi bi-journal-text"></i> Notes</h6>
+              <textarea id="noteArea" class="form-control note-area" rows="5" placeholder="Write your notes for this lesson…"></textarea>
+              <div class="d-flex justify-content-end mt-2">
+                <button class="btn btn-accent btn-sm" id="btnSaveNote"><i class="bi bi-save"></i> Save Note</button>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkComplete">
+                <label class="form-check-label" for="chkComplete">Mark lesson as complete</label>
+              </div>
+              <div class="small text-secondary">Autosaves progress locally</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CERTIFICATE MODAL -->
+  <div class="modal fade" id="certModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-award"></i> Certificate of Completion</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <canvas id="certCanvas" class="w-100" height="400"></canvas>
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button class="btn btn-outline-light" id="btnPrintCert"><i class="bi bi-printer"></i> Print</button>
+            <button class="btn btn-accent" id="btnDownloadCert"><i class="bi bi-download"></i> Download PNG</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOTSTRAP -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- APP SCRIPT -->
+  <script>
+    /* =========================
+       DATA (Demo Courses)
+       ========================= */
+    const COURSES = [
+      {
+        id: "html-foundations",
+        title: "HTML Foundations",
+        category: "Programming",
+        level: "Beginner",
+        durationMin: 120,
+        rating: 4.8,
+        tagline: "Build semantic, accessible web pages from scratch.",
+        topics: ["HTML", "Accessibility", "SEO"],
+        lessons: [
+          { id: "h1", title: "The Web & HTML Basics",
+            content: `
+              <p>HTML (HyperText Markup Language) is the structure of the web. You describe content with <em>elements</em> like <code>&lt;h1&gt;</code>, <code>&lt;p&gt;</code>, and <code>&lt;a&gt;</code>.</p>
+              <ul>
+                <li>Use semantic tags (e.g., <code>&lt;header&gt;, &lt;main&gt;, &lt;footer&gt;</code>).</li>
+                <li>Always validate your HTML and include alt text for images.</li>
+              </ul>
+              <div class="alert alert-secondary">Tip: Press <kbd>Ctrl</kbd> + <kbd>U</kbd> to view page source in most browsers.</div>
+            `,
+            quiz: [
+              { q: "Which tag best describes the main content of a page?", options: ["<div>", "<main>", "<section>", "<body>"], answer: 1 },
+              { q: "Which attribute provides text alternatives for images?", options: ["title", "alt", "label", "aria"], answer: 1 },
+            ]
+          },
+          { id: "h2", title: "Links, Images, and Lists",
+            content: `
+              <p>Links use <code>&lt;a href="…"&gt;</code>, images use <code>&lt;img src="…" alt="…"&gt;</code>, and lists can be ordered or unordered with <code>&lt;ol&gt;</code> / <code>&lt;ul&gt;</code>.</p>
+              <p>Group related nav links inside <code>&lt;nav&gt;</code> for better semantics and accessibility.</p>
+            `,
+            quiz: [
+              { q: "Which tag is for an unordered list?", options: ["<ol>", "<ul>", "<li>", "<dl>"], answer: 1 },
+            ]
+          },
+          { id: "h3", title: "Forms & Inputs",
+            content: `
+              <p>Forms collect user data via <code>&lt;form&gt;</code>, with inputs like <code>text</code>, <code>email</code>, and <code>checkbox</code>.</p>
+              <p>Associate labels using <code>&lt;label for="id"&gt;</code> to improve usability and accessibility.</p>
+            `,
+            quiz: [
+              { q: "What element groups and sends input values?", options:["<input>","<form>","<fieldset>","<label>"], answer: 1 }
+            ]
+          },
+        ]
+      },
+      {
+        id: "css-ui-design",
+        title: "CSS for Modern UI",
+        category: "Design",
+        level: "Intermediate",
+        durationMin: 180,
+        rating: 4.9,
+        tagline: "Craft responsive, elegant user interfaces.",
+        topics: ["Flexbox", "Grid", "Responsive"],
+        lessons: [
+          { id: "c1", title: "Layout with Flexbox",
+            content: `<p>Flexbox aligns items along one dimension. Use <code>display:flex</code> and properties like <code>justify-content</code> and <code>align-items</code>.</p>`,
+            quiz: [
+              { q: "Which property changes the main axis distribution?", options: ["align-items","justify-content","flex-wrap","gap"], answer: 1 }
+            ]
+          },
+          { id: "c2", title: "Grid for Complex Layouts",
+            content: `<p>CSS Grid is ideal for two-dimensional layouts. Define columns/rows with <code>grid-template-columns</code> and <code>grid-template-rows</code>.</p>`,
+            quiz: [
+              { q: "What property defines grid columns?", options:["grid-columns","grid-template-columns","grid-col","grid-repeat"], answer: 1 }
+            ]
+          },
+          { id: "c3", title: "Responsive Patterns",
+            content: `<p>Use relative units (%, rem, vw), media queries, and modern container queries for resilient design.</p>`,
+            quiz: [
+              { q: "Which unit scales with root font size?", options:["em","rem","px","%"], answer: 1 }
+            ]
+          },
+        ]
+      },
+      {
+        id: "js-productivity",
+        title: "JavaScript Productivity Toolkit",
+        category: "Productivity",
+        level: "Beginner",
+        durationMin: 150,
+        rating: 4.7,
+        tagline: "Automate the boring tasks in your browser.",
+        topics: ["DOM", "Storage", "APIs"],
+        lessons: [
+          { id: "j1", title: "DOM Essentials",
+            content: `<p>The DOM represents the page so programs can change the document structure, style, and content.</p>`,
+            quiz: [
+              { q: "Which method selects a single element by CSS selector?", options:["querySelector","getElementsByClass","select","findOne"], answer: 0 }
+            ]
+          },
+          { id: "j2", title: "Local Storage & State",
+            content: `<p><code>localStorage</code> stores key-value pairs in the browser. Save user preferences and progress.</p>`,
+            quiz: [
+              { q: "Which API persists small key/value pairs locally?", options:["sessionAPI","localStorage","WebCache","CookieStore"], answer: 1 }
+            ]
+          },
+          { id: "j3", title: "Calling Public APIs",
+            content: `<p>Use <code>fetch()</code> for HTTP requests. Always handle errors and timeouts gracefully.</p>`,
+            quiz: [
+              { q: "Which function is used for HTTP requests?", options:["ajax()","request()","fetch()","httpGet()"], answer: 2 }
+            ]
+          },
+        ]
+      },
+      {
+        id: "biz-side-hustles",
+        title: "Business Mini-MBA: Side Hustles",
+        category: "Business",
+        level: "Advanced",
+        durationMin: 200,
+        rating: 4.6,
+        tagline: "Validate ideas, price correctly, and scale.",
+        topics: ["Pricing", "Validation", "Funnels"],
+        lessons: [
+          { id: "b1", title: "Finding a Profitable Niche", content: `<p>Look for pain points, purchasing power, and reachable audiences.</p>`, quiz: [
+              { q: "Which signal matters most for a niche?", options:["Hobby fame","Strong pain point","Viral memes","Free tools"], answer: 1 }
+          ]},
+          { id: "b2", title: "Pricing & Offers", content: `<p>Price on value, not cost. Use tiers and anchors.</p>`, quiz: [
+              { q: "Pricing should be primarily based on…", options:["Cost","Competitors","Value","Luck"], answer: 2 }
+          ]},
+          { id: "b3", title: "Simple Acquisition Funnels", content: `<p>Awareness → Consideration → Conversion → Retention → Advocacy.</p>`, quiz: [
+              { q: "Which comes after Awareness?", options:["Retention","Consideration","Advocacy","Pricing"], answer: 1 }
+          ]}
+        ]
+      }
+    ];
+
+    /* =========================
+       STATE & STORAGE
+       ========================= */
+    const els = {
+      learnerName: document.getElementById('learnerName'),
+      changeNameBtn: document.getElementById('changeNameBtn'),
+      viewCatalog: document.getElementById('viewCatalog'),
+      viewMyCourses: document.getElementById('viewMyCourses'),
+      catalogWrap: document.getElementById('catalogWrap'),
+      myCoursesWrap: document.getElementById('myCoursesWrap'),
+      coursesGrid: document.getElementById('coursesGrid'),
+      myCoursesList: document.getElementById('myCoursesList'),
+      courseCount: document.getElementById('courseCount'),
+      enrolledCount: document.getElementById('enrolledCount'),
+      completedCount: document.getElementById('completedCount'),
+      searchInput: document.getElementById('searchInput'),
+      categorySelect: document.getElementById('categorySelect'),
+      difficultySelect: document.getElementById('difficultySelect'),
+      sortSelect: document.getElementById('sortSelect'),
+      // viewer
+      viewerWrap: document.getElementById('viewerWrap'),
+      vCourseTitle: document.getElementById('vCourseTitle'),
+      vCourseMeta: document.getElementById('vCourseMeta'),
+      vCourseLevel: document.getElementById('vCourseLevel'),
+      vCourseProgress: document.getElementById('vCourseProgress'),
+      lessonList: document.getElementById('lessonList'),
+      vLessonTitle: document.getElementById('vLessonTitle'),
+      vLessonBody: document.getElementById('vLessonBody'),
+      btnPrev: document.getElementById('btnPrev'),
+      btnNext: document.getElementById('btnNext'),
+      btnBackCatalog: document.getElementById('btnBackCatalog'),
+      chkComplete: document.getElementById('chkComplete'),
+      noteArea: document.getElementById('noteArea'),
+      btnSaveNote: document.getElementById('btnSaveNote'),
+      quizWrap: document.getElementById('quizWrap'),
+      quizForm: document.getElementById('quizForm'),
+      quizStatus: document.getElementById('quizStatus'),
+      btnCheckAnswers: document.getElementById('btnCheckAnswers'),
+      // cert
+      btnCertificate: document.getElementById('btnCertificate'),
+      certCanvas: document.getElementById('certCanvas'),
+      exportJSON: document.getElementById('exportJSON'),
+      exportCSV: document.getElementById('exportCSV'),
+      importFile: document.getElementById('importFile'),
+    };
+
+    const LS = {
+      name: 'lms_user',
+      enrolled: 'lms_enrolled',
+      progress: 'lms_progress',
+      notes: 'lms_notes',
+    };
+
+    const state = {
+      view: 'catalog', // 'catalog' | 'my' | 'viewer'
+      query: '',
+      cat: '',
+      level: '',
+      sort: 'featured',
+      // viewer
+      currentCourse: null,
+      currentLessonIdx: 0,
+    };
+
+    function loadJSON(key, fallback){ try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch{ return fallback; } }
+    function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+    function getName(){ return localStorage.getItem(LS.name) || 'Guest'; }
+    function setName(n){ localStorage.setItem(LS.name, n); els.learnerName.textContent = n; }
+
+    function getEnrolled(){ return new Set(loadJSON(LS.enrolled, [])); }
+    function setEnrolled(set){ saveJSON(LS.enrolled, [...set]); }
+
+    // progress: { [courseId]: { completed: Set(lessonId), quizScores: {[lessonId]: score}, lastLesson: number } }
+    function getProgress(){ const p = loadJSON(LS.progress, {}); // revive sets
+      for (const id in p){ p[id].completed = new Set(p[id].completed || []); }
+      return p;
+    }
+    function saveProgress(p){ const json = {}; for (const id in p){ json[id] = { ...p[id], completed: [...p[id].completed] }; } saveJSON(LS.progress, json); }
+
+    function getNotes(){ return loadJSON(LS.notes, {}); }
+    function saveNotes(n){ saveJSON(LS.notes, n); }
+
+    /* =========================
+       RENDER — CATALOG & MY
+       ========================= */
+    function filterAndSort(courses){
+      let list = courses.filter(c =>
+        (!state.query || (c.title + ' ' + c.tagline + ' ' + c.topics.join(' ')).toLowerCase().includes(state.query)) &&
+        (!state.cat || c.category === state.cat) &&
+        (!state.level || c.level === state.level)
+      );
+      switch(state.sort){
+        case 'rating_desc': list.sort((a,b)=> b.rating - a.rating); break;
+        case 'rating_asc':  list.sort((a,b)=> a.rating - b.rating); break;
+        case 'duration_asc': list.sort((a,b)=> a.durationMin - b.durationMin); break;
+        case 'duration_desc': list.sort((a,b)=> b.durationMin - a.durationMin); break;
+        default: // featured
+          list.sort((a,b)=> b.rating - a.rating || a.durationMin - b.durationMin);
+      }
+      return list;
+    }
+
+    function renderCatalog(){
+      els.catalogWrap.style.display = '';
+      els.myCoursesWrap.style.display = 'none';
+      els.viewerWrap.style.display = 'none';
+      const list = filterAndSort(COURSES);
+      els.courseCount.textContent = list.length.toString();
+      const enrolled = getEnrolled();
+      const progress = getProgress();
+
+      els.coursesGrid.innerHTML = list.map(c => {
+        const enrolledFlag = enrolled.has(c.id);
+        const prog = progress[c.id] ? Math.round(100 * progress[c.id].completed.size / c.lessons.length) : 0;
+        return `
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="glass p-3 course-card h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="small text-secondary">${c.category} · ${c.level}</div>
+                <h5 class="fw-bold mb-1">${c.title}</h5>
+              </div>
+              <span class="badge">${c.topics.slice(0,2).join(' • ')}</span>
+            </div>
+            <p class="text-secondary mb-2">${c.tagline}</p>
+            <div class="d-flex justify-content-between align-items-center small mb-2">
+              <div class="rating">${"★".repeat(Math.round(c.rating))}<span class="text-secondary"> (${c.rating.toFixed(1)})</span></div>
+              <div class="text-secondary"><i class="bi bi-clock"></i> ${c.durationMin} min</div>
+            </div>
+            <div class="progress mb-2"><div class="progress-bar" style="width:${prog}%"></div></div>
+            <div class="text-secondary small mb-3">Progress: ${prog}%</div>
+            <div class="mt-auto d-flex gap-2">
+              <button class="btn btn-accent btn-sm flex-fill" data-start="${c.id}">
+                <i class="bi bi-play-circle"></i> ${enrolledFlag ? "Resume" : "Start"}
+              </button>
+              <button class="btn btn-outline-light btn-sm" data-enroll="${c.id}">
+                <i class="bi ${enrolledFlag ? 'bi-check2-circle' : 'bi-plus-circle'}"></i> ${enrolledFlag ? "Enrolled" : "Enroll"}
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // events
+      els.coursesGrid.querySelectorAll('button[data-start]').forEach(btn=>{
+        btn.addEventListener('click', ()=> openViewer(btn.getAttribute('data-start')));
+      });
+      els.coursesGrid.querySelectorAll('button[data-enroll]').forEach(btn=>{
+        btn.addEventListener('click', ()=> toggleEnroll(btn.getAttribute('data-enroll')));
+      });
+
+      updateCounters();
+    }
+
+    function renderMyCourses(){
+      els.catalogWrap.style.display = 'none';
+      els.myCoursesWrap.style.display = '';
+      els.viewerWrap.style.display = 'none';
+      const enrolled = getEnrolled();
+      const progress = getProgress();
+      const my = COURSES.filter(c => enrolled.has(c.id));
+      if (!my.length){
+        els.myCoursesList.innerHTML = `<div class="text-secondary">You haven't enrolled in any course yet. Browse Catalog to get started.</div>`;
+        updateCounters();
+        return;
+      }
+      els.myCoursesList.innerHTML = my.map(c => {
+        const prog = progress[c.id] ? Math.round(100 * progress[c.id].completed.size / c.lessons.length) : 0;
+        const allDone = prog === 100;
+        return `
+          <div class="col-12 col-md-6">
+            <div class="glass p-3 h-100 d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="small text-secondary">${c.category} · ${c.level}</div>
+                  <h5 class="fw-bold mb-1">${c.title}</h5>
+                </div>
+                <span class="badge">${c.topics.slice(0,2).join(' • ')}</span>
+              </div>
+              <div class="progress my-2"><div class="progress-bar" style="width:${prog}%"></div></div>
+              <div class="text-secondary small">Progress: ${prog}%</div>
+              <div class="mt-auto d-flex gap-2 pt-2">
+                <button class="btn btn-accent btn-sm flex-fill" data-start="${c.id}"><i class="bi bi-play-circle"></i> Resume</button>
+                <button class="btn btn-outline-light btn-sm" data-unenroll="${c.id}"><i class="bi bi-x-circle"></i> Unenroll</button>
+                <button class="btn btn-outline-light btn-sm" data-cert="${c.id}" ${allDone? '' : 'disabled'}><i class="bi bi-award"></i> Certificate</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      els.myCoursesList.querySelectorAll('button[data-start]').forEach(b=> b.addEventListener('click', ()=> openViewer(b.getAttribute('data-start'))));
+      els.myCoursesList.querySelectorAll('button[data-unenroll]').forEach(b=> b.addEventListener('click', ()=> toggleEnroll(b.getAttribute('data-unenroll'))));
+      els.myCoursesList.querySelectorAll('button[data-cert]').forEach(b=> b.addEventListener('click', ()=> openCertificate(b.getAttribute('data-cert'))));
+
+      updateCounters();
+    }
+
+    function updateCounters(){
+      const enrolled = getEnrolled();
+      const progress = getProgress();
+      els.enrolledCount.textContent = enrolled.size;
+      let completed = 0;
+      for (const c of COURSES){
+        const p = progress[c.id];
+        if (p && p.completed.size === c.lessons.length) completed++;
+      }
+      els.completedCount.textContent = completed;
+    }
+
+    function toggleEnroll(courseId){
+      const enrolled = getEnrolled();
+      if (enrolled.has(courseId)) enrolled.delete(courseId); else enrolled.add(courseId);
+      setEnrolled(enrolled);
+      // ensure progress object exists
+      const pr = getProgress();
+      if (!pr[courseId]) pr[courseId] = { completed: new Set(), quizScores: {}, lastLesson: 0 };
+      saveProgress(pr);
+      // refresh current view
+      if (state.view === 'my') renderMyCourses(); else renderCatalog();
+    }
+
+    /* =========================
+       VIEWER
+       ========================= */
+    function openViewer(courseId){
+      const c = COURSES.find(x => x.id === courseId);
+      if (!c) return;
+      state.view = 'viewer';
+      state.currentCourse = c;
+      const pr = getProgress();
+      if (!pr[c.id]){ pr[c.id] = { completed: new Set(), quizScores: {}, lastLesson: 0 }; saveProgress(pr); }
+      state.currentLessonIdx = pr[c.id].lastLesson || 0;
+
+      els.catalogWrap.style.display = 'none';
+      els.myCoursesWrap.style.display = 'none';
+      els.viewerWrap.style.display = '';
+
+      els.vCourseTitle.textContent = c.title;
+      els.vCourseLevel.textContent = c.level;
+      els.vCourseMeta.textContent = `${c.category} • ${c.durationMin} min • ${c.lessons.length} lessons`;
+      renderLessonList();
+      loadLesson();
+      refreshCourseProgressUI();
+    }
+
+    function renderLessonList(){
+      const c = state.currentCourse;
+      const pr = getProgress()[c.id];
+      els.lessonList.innerHTML = c.lessons.map((L, i)=>{
+        const active = i === state.currentLessonIdx ? 'active' : '';
+        const done = pr.completed.has(L.id) ? 'completed' : '';
+        return `<div class="lesson-item ${active} ${done}" data-idx="${i}">
+          <span class="text-truncate"><i class="bi bi-play-circle me-2"></i>${L.title}</span>
+          <i class="bi bi-check2-circle"></i>
+        </div>`;
+      }).join('');
+      els.lessonList.querySelectorAll('.lesson-item').forEach(div=>{
+        div.addEventListener('click', ()=>{
+          state.currentLessonIdx = parseInt(div.getAttribute('data-idx')); loadLesson();
+          renderLessonList();
+        });
+      });
+    }
+
+    function loadLesson(){
+      const c = state.currentCourse;
+      const L = c.lessons[state.currentLessonIdx];
+      const pr = getProgress();
+      pr[c.id].lastLesson = state.currentLessonIdx;
+      saveProgress(pr);
+
+      els.vLessonTitle.textContent = L.title;
+      els.vLessonBody.innerHTML = L.content;
+
+      // notes
+      const notes = getNotes();
+      els.noteArea.value = notes[c.id]?.[L.id] || '';
+
+      // completion check
+      els.chkComplete.checked = pr[c.id].completed.has(L.id);
+      els.chkComplete.onchange = ()=>{
+        const pr2 = getProgress();
+        if (els.chkComplete.checked) pr2[c.id].completed.add(L.id);
+        else pr2[c.id].completed.delete(L.id);
+        saveProgress(pr2);
+        renderLessonList();
+        refreshCourseProgressUI();
+        refreshCertificateButton();
+      };
+
+      // quiz
+      renderQuiz(L);
+      refreshNavButtons();
+      refreshCertificateButton();
+    }
+
+    function refreshNavButtons(){
+      els.btnPrev.disabled = state.currentLessonIdx === 0;
+      els.btnNext.disabled = state.currentLessonIdx === state.currentCourse.lessons.length - 1;
+      els.btnPrev.onclick = ()=>{ if (state.currentLessonIdx>0){ state.currentLessonIdx--; loadLesson(); renderLessonList(); } };
+      els.btnNext.onclick = ()=>{ if (state.currentLessonIdx<state.currentCourse.lessons.length-1){ state.currentLessonIdx++; loadLesson(); renderLessonList(); } };
+    }
+
+    function refreshCourseProgressUI(){
+      const c = state.currentCourse;
+      const pr = getProgress()[c.id];
+      const pct = Math.round(100 * pr.completed.size / c.lessons.length);
+      els.vCourseProgress.style.width = pct + '%';
+      els.vCourseProgress.title = pct + '%';
+    }
+
+    function renderQuiz(L){
+      if (!L.quiz || !L.quiz.length){ els.quizWrap.style.display = 'none'; return; }
+      els.quizWrap.style.display = '';
+      els.quizForm.innerHTML = L.quiz.map((item, idx)=>{
+        const name = `q${idx}`;
+        const options = item.options.map((opt, j)=>`
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="${name}" id="${name}_${j}" value="${j}">
+              <label class="form-check-label" for="${name}_${j}">${escapeHTML(opt)}</label>
+            </div>`).join('');
+        return `<div class="p-2 border rounded-3">
+          <div class="fw-semibold mb-2">${idx+1}. ${escapeHTML(item.q)}</div>
+          ${options}
+        </div>`;
+      }).join('');
+
+      els.quizStatus.textContent = '—';
+      els.btnCheckAnswers.onclick = ()=>{
+        let correct = 0;
+        L.quiz.forEach((item, idx)=>{
+          const sel = document.querySelector(`input[name="q${idx}"]:checked`);
+          const chosen = sel ? parseInt(sel.value) : -1;
+          const right = item.answer;
+          if (chosen === right) correct++;
+        });
+        const score = Math.round(100 * correct / L.quiz.length);
+        els.quizStatus.innerHTML = score >= 70
+          ? `<span class="text-success">Great! Score ${score}%</span>`
+          : `<span class="text-danger">Keep practicing. Score ${score}%</span>`;
+        const pr = getProgress();
+        pr[state.currentCourse.id].quizScores[L.id] = score;
+        saveProgress(pr);
+        refreshCertificateButton();
+      };
+    }
+
+    function refreshCertificateButton(){
+      const c = state.currentCourse;
+      const pr = getProgress()[c.id];
+      if (!pr) { els.btnCertificate.disabled = true; return; }
+      const allLessonsDone = pr.completed.size === c.lessons.length;
+      const allQuizzesOk = c.lessons.every(L => !L.quiz || (pr.quizScores[L.id] || 0) >= 70);
+      els.btnCertificate.disabled = !(allLessonsDone && allQuizzesOk);
+      els.btnCertificate.onclick = ()=> openCertificate(c.id);
+    }
+
+    function escapeHTML(s){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    /* =========================
+       CERTIFICATE
+       ========================= */
+    function openCertificate(courseId){
+      const c = COURSES.find(x=>x.id===courseId);
+      if (!c) return;
+      const modal = new bootstrap.Modal(document.getElementById('certModal'));
+      drawCertificate(c.title, getName());
+      modal.show();
+    }
+
+    function drawCertificate(courseTitle, learner){
+      const canvas = els.certCanvas;
+      canvas.width = canvas.clientWidth;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      // background
+      const grd = ctx.createLinearGradient(0,0,w,h);
+      grd.addColorStop(0,'#141a3a'); grd.addColorStop(1,'#0a0f25');
+      ctx.fillStyle = grd; ctx.fillRect(0,0,w,h);
+      // border
+      ctx.strokeStyle = 'rgba(124,92,255,.8)'; ctx.lineWidth = 4;
+      ctx.strokeRect(16,16,w-32,h-32);
+      // title
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '700 28px Inter';
+      ctx.fillText('CERTIFICATE OF COMPLETION', 40, 90);
+      // name
+      ctx.font = '800 36px Inter';
+      ctx.fillStyle = '#22d3ee';
+      ctx.fillText(learner, 40, 150);
+      // text
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '600 18px Inter';
+      ctx.fillText('has successfully completed the course', 40, 185);
+      ctx.font = '700 24px Inter';
+      ctx.fillStyle = '#f59e0b';
+      wrapText(ctx, courseTitle, 40, 220, w-80, 28);
+      // date
+      const date = new Date().toLocaleDateString();
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '600 16px Inter';
+      ctx.fillText('Date: ' + date, 40, h-60);
+      // signature
+      ctx.fillText('Instructor: Magnificent Learning Hub', w-380, h-60);
+      // seal
+      ctx.beginPath();
+      ctx.arc(w-100, 100, 48, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(52,211,153,.15)'; ctx.fill();
+      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = '#34d399'; ctx.font = '800 18px Inter';
+      ctx.fillText('CERT', w-127, 105);
+      // helpers
+      document.getElementById('btnPrintCert').onclick = ()=> window.print();
+      document.getElementById('btnDownloadCert').onclick = ()=>{
+        const link = document.createElement('a');
+        link.download = `certificate_${slugify(courseTitle)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+    }
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+      const words = text.split(' '); let line = '';
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, y);
+          line = words[n] + ' ';
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, y);
+    }
+    function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+    /* =========================
+       EXPORT / IMPORT
+       ========================= */
+    els.exportJSON.onclick = (e)=>{ e.preventDefault();
+      const data = {
+        name: getName(),
+        enrolled: [...getEnrolled()],
+        progress: (function(){const p=getProgress(); const json={}; for(const id in p){ json[id]={...p[id], completed:[...p[id].completed]}; } return json;})(),
+        notes: getNotes()
+      };
+      downloadFile('learning_progress.json', JSON.stringify(data, null, 2), 'application/json');
+    };
+    els.exportCSV.onclick = (e)=>{ e.preventDefault();
+      const rows = [['Course','Lesson Completed','Quiz Scores (%)']];
+      const p = getProgress();
+      for (const c of COURSES){
+        const cp = p[c.id];
+        if (!cp) continue;
+        rows.push([c.title, `${cp.completed.size}/${c.lessons.length}`, Object.values(cp.quizScores).join('|') || '-']);
+      }
+      const csv = rows.map(r => r.map(v => `"${(v??'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+      downloadFile('learning_progress.csv', csv, 'text/csv;charset=utf-8;');
+    };
+    function downloadFile(name, content, type){
+      const blob = new Blob([content], {type}); const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+      a.remove(); URL.revokeObjectURL(url);
+    }
+
+    els.importFile.addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const data = JSON.parse(reader.result);
+          if (data.name) setName(data.name);
+          if (Array.isArray(data.enrolled)) saveJSON(LS.enrolled, JSON.stringify(data.enrolled)) // purposely stringify to keep array
+          setEnrolled(new Set(data.enrolled || []));
+          if (data.progress) saveJSON(LS.progress, data.progress);
+          if (data.notes) saveNotes(data.notes);
+          alert('Import successful!');
+          rerender();
+        }catch(err){ alert('Import failed: ' + err.message); }
+      };
+      reader.readAsText(file);
+    });
+
+    /* =========================
+       CONTROLS / VIEW SWITCH
+       ========================= */
+    els.viewCatalog.onclick = ()=>{ state.view='catalog'; rerender(); };
+    els.viewMyCourses.onclick = ()=>{ state.view='my'; rerender(); };
+    els.btnBackCatalog.onclick = ()=>{ state.view='catalog'; rerender(); };
+
+    els.searchInput.addEventListener('input', debounce(()=>{ state.query = els.searchInput.value.trim().toLowerCase(); rerender(); }, 200));
+    els.categorySelect.addEventListener('change', ()=>{ state.cat = els.categorySelect.value; rerender(); });
+    els.difficultySelect.addEventListener('change', ()=>{ state.level = els.difficultySelect.value; rerender(); });
+    els.sortSelect.addEventListener('change', ()=>{ state.sort = els.sortSelect.value; rerender(); });
+
+    // Notes
+    els.btnSaveNote.onclick = ()=>{
+      const c = state.currentCourse, L = c.lessons[state.currentLessonIdx];
+      const notes = getNotes(); if (!notes[c.id]) notes[c.id] = {};
+      notes[c.id][L.id] = els.noteArea.value; saveNotes(notes);
+      const btn = els.btnSaveNote; const prev = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-check2"></i> Saved'; setTimeout(()=> btn.innerHTML = prev, 1200);
+    };
+
+    // Name handling
+    els.changeNameBtn.onclick = ()=>{
+      const current = getName();
+      const n = prompt('Enter your name for certificates:', current === 'Guest' ? '' : current) || 'Guest';
+      setName(n);
+    };
+
+    function rerender(){
+      els.learnerName.textContent = getName();
+      if (state.view === 'catalog'){ renderCatalog(); }
+      else if (state.view === 'my'){ renderMyCourses(); }
+      else if (state.view === 'viewer'){ openViewer(state.currentCourse?.id || COURSES[0].id); }
+    }
+
+    /* =========================
+       HELPERS
+       ========================= */
+    function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+    /* =========================
+       INIT
+       ========================= */
+    (function init(){
+      if (!localStorage.getItem(LS.name)){
+        // ask once
+        setTimeout(()=>{
+          const n = prompt('Welcome! Enter your name for certificates (optional):','') || 'Guest';
+          setName(n);
+        }, 200);
+      } else {
+        els.learnerName.textContent = getName();
+      }
+      renderCatalog();
+    })();
+  </script>
+</body>
+</html>
