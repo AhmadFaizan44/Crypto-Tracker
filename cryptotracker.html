@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Magnificent Crypto Price Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b1020;
+      --card: #121832;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #7c5cff;
+      --accent-2: #34d399;
+      --danger: #ef4444;
+      --gold: #f59e0b;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --glass: rgba(255,255,255,0.06);
+    }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 1200px at -10% -10%, #1b2754 0%, var(--bg) 45%) fixed, var(--bg);
+      color: var(--text);
+    }
+    .navbar{
+      background: linear-gradient(180deg, rgba(12,19,45,.9), rgba(12,19,45,.75)) !important;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .brand-badge{
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color: #fff; border-radius: 14px; padding: .35rem .75rem; font-weight: 700; letter-spacing:.5px;
+      box-shadow: var(--shadow);
+    }
+    .hero{
+      background: radial-gradient(1200px 500px at 80% -20%, rgba(124,92,255,.25), transparent 60%) no-repeat;
+    }
+    .stat-chip{
+      display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:999px;
+      background: var(--glass); border:1px solid rgba(255,255,255,.08);
+    }
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .table{
+      --bs-table-color: var(--text);
+      --bs-table-bg: transparent;
+      --bs-table-border-color: rgba(255,255,255,.08);
+      vertical-align: middle;
+    }
+    .table thead th{ color:#cbd5e1; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+    .table tbody tr:hover{ background: rgba(255,255,255,.03); }
+    .price-up{ color: var(--accent-2); }
+    .price-down{ color: var(--danger); }
+    .watch-btn{ background:transparent; border:none; font-size:1.2rem; color:#cbd5e1; }
+    .watch-btn.active{ color: var(--gold); }
+    .badge-coin{
+      background: rgba(124,92,255,.15); border: 1px solid rgba(124,92,255,.4); color:#ddd; padding:.25rem .5rem; border-radius:10px;
+    }
+    .form-control, .form-select{
+      background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.15); color:#e5e7eb;
+    }
+    .form-control:focus, .form-select:focus{ border-color: var(--accent); box-shadow: 0 0 0 .2rem rgba(124,92,255,.2); }
+    .btn-accent{
+      background: linear-gradient(135deg, var(--accent), #4338ca);
+      color:#fff; border:none; box-shadow: var(--shadow);
+    }
+    .btn-outline-light{ border-color: rgba(255,255,255,.3); }
+    .footer{
+      color: var(--muted); font-size:.9rem;
+    }
+    .sparkline{ width: 140px; height: 40px; }
+    .pagination .page-link{ background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); color:#e5e7eb; }
+    .pagination .page-item.active .page-link{ background: var(--accent); border-color: var(--accent); }
+    .toggle{
+      display:inline-flex; align-items:center; gap:.5rem; border:1px solid rgba(255,255,255,.12);
+      border-radius: 999px; padding:.25rem; background: rgba(255,255,255,.06);
+    }
+    .toggle button{ border:0; background:transparent; color:#cbd5e1; padding:.35rem .75rem; border-radius:999px; }
+    .toggle button.active{ background: var(--accent); color:#fff; }
+    .pill{ border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); border-radius:999px; padding:.4rem .7rem; }
+    .link-muted{ color:#94a3b8; text-decoration:none; }
+    .link-muted:hover{ color:#cbd5e1; }
+    @media (max-width: 768px){
+      .sparkline{ display:none; }
+      .hide-sm{ display:none; }
+      .table-responsive{ border-radius: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <span class="brand-badge">MAGNIFICENT</span>
+        <span class="fw-bold">Crypto Tracker</span>
+      </a>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="toggle" id="viewToggle" role="tablist" aria-label="Table View Toggle">
+          <button class="active" data-view="market" title="Market view"><i class="bi bi-bar-chart-line"></i> Market</button>
+          <button data-view="watchlist" title="Watchlist"><i class="bi bi-star"></i> Watchlist</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO / CONTROLS -->
+  <header class="hero container py-4">
+    <div class="glass p-4 p-md-5">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+        <div>
+          <h1 class="display-6 fw-800 mb-2">Real-Time Cryptocurrency Prices</h1>
+          <p class="text-secondary mb-3">Live market data, watchlist, sparkline charts, sorting, CSV export — all front-end only.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="stat-chip"><i class="bi bi-graph-up"></i> Top 100 by Market Cap</span>
+            <span class="stat-chip"><i class="bi bi-clock"></i> Auto refresh: <span id="autoRefreshLabel">On</span></span>
+            <span class="stat-chip"><i class="bi bi-geo"></i> Multi-currency</span>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <select class="form-select" id="currencySelect" style="min-width:140px">
+            <option value="usd" selected>USD</option>
+            <option value="eur">EUR</option>
+            <option value="pkr">PKR</option>
+          </select>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control" id="searchInput" placeholder="Search coin (e.g., bitcoin, eth)">
+          </div>
+          <button class="btn btn-outline-light" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          <button class="btn btn-accent" id="exportBtn"><i class="bi bi-download"></i> Export CSV</button>
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+        <span class="pill">Last update: <span id="lastUpdated">—</span></span>
+        <span class="pill">Rows: <span id="rowsCount">0</span></span>
+        <div class="pill">
+          Sort:
+          <select class="border-0 bg-transparent text-light" id="sortSelect">
+            <option value="market_cap_desc" selected>Market Cap ↓</option>
+            <option value="market_cap_asc">Market Cap ↑</option>
+            <option value="volume_desc">Volume ↓</option>
+            <option value="volume_asc">Volume ↑</option>
+            <option value="price_desc">Price ↓</option>
+            <option value="price_asc">Price ↑</option>
+            <option value="change24_desc">24h Change ↓</option>
+            <option value="change24_asc">24h Change ↑</option>
+          </select>
+        </div>
+        <div class="pill">
+          Page size:
+          <select class="border-0 bg-transparent text-light" id="pageSizeSelect">
+            <option>10</option>
+            <option selected>20</option>
+            <option>50</option>
+            <option>100</option>
+          </select>
+        </div>
+        <div class="form-check form-switch ms-auto">
+          <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+          <label class="form-check-label" for="autoRefresh">Auto refresh (30s)</label>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- TABLE -->
+  <main class="container my-4">
+    <div class="glass p-3 p-md-4">
+      <div class="table-responsive">
+        <table class="table align-middle" id="coinsTable" aria-describedby="tableHelp">
+          <thead>
+          <tr>
+            <th>#</th>
+            <th>Coin</th>
+            <th class="hide-sm">Symbol</th>
+            <th>Price</th>
+            <th class="hide-sm">24h</th>
+            <th class="hide-sm">7d</th>
+            <th class="hide-sm">Volume</th>
+            <th class="hide-sm">Market Cap</th>
+            <th>Trend</th>
+            <th>Watch</th>
+          </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <nav class="d-flex justify-content-between align-items-center mt-3">
+        <div class="text-secondary small" id="tableHelp">Click a row for details. Data from CoinGecko.</div>
+        <ul class="pagination mb-0" id="pagination"></ul>
+      </nav>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="container mb-5">
+    <div class="footer text-center">
+      Built with ❤️ using HTML, CSS, JavaScript, and Bootstrap. No backend required.
+    </div>
+  </footer>
+
+  <!-- DETAILS MODAL -->
+  <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="background: #0e1530; color:#e5e7eb; border:1px solid rgba(255,255,255,.1);">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailTitle">Coin Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="glass p-3 h-100">
+                <div class="d-flex align-items-center gap-2">
+                  <img id="detailIcon" src="" width="32" height="32" alt="">
+                  <div>
+                    <div class="fw-bold" id="detailName">—</div>
+                    <div class="text-secondary text-uppercase small" id="detailSymbol">—</div>
+                  </div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between"><span>Price</span><span id="detailPrice">—</span></div>
+                <div class="d-flex justify-content-between"><span>24h Change</span><span id="detailChange24">—</span></div>
+                <div class="d-flex justify-content-between"><span>Market Cap</span><span id="detailMcap">—</span></div>
+                <div class="d-flex justify-content-between"><span>Volume</span><span id="detailVol">—</span></div>
+                <div class="d-flex justify-content-between"><span>Rank</span><span id="detailRank">—</span></div>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="glass p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="fw-semibold">7-Day Sparkline</div>
+                  <div class="text-secondary small" id="detailRange">Past 7 days</div>
+                </div>
+                <canvas id="sparklineCanvas" class="w-100" height="120"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 text-secondary small">
+            Tip: Add to watchlist with the star icon in the table. Your list is saved in this browser.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ====== CONFIG ======
+    const API_BASE = 'https://api.coingecko.com/api/v3';
+    const DEFAULT_PER_PAGE = 100;  // fetch many, paginate client-side
+    const AUTO_REFRESH_MS = 30000;
+
+    // ====== STATE ======
+    let state = {
+      currency: 'usd',
+      coins: [],
+      filtered: [],
+      page: 1,
+      pageSize: 20,
+      order: 'market_cap_desc',
+      search: '',
+      view: 'market', // 'market' | 'watchlist'
+      autoRefresh: true,
+      lastFetchAt: 0
+    };
+
+    const els = {
+      tableBody: document.getElementById('tableBody'),
+      rowsCount: document.getElementById('rowsCount'),
+      lastUpdated: document.getElementById('lastUpdated'),
+      searchInput: document.getElementById('searchInput'),
+      sortSelect: document.getElementById('sortSelect'),
+      pageSizeSelect: document.getElementById('pageSizeSelect'),
+      pagination: document.getElementById('pagination'),
+      currencySelect: document.getElementById('currencySelect'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      autoRefresh: document.getElementById('autoRefresh'),
+      autoRefreshLabel: document.getElementById('autoRefreshLabel'),
+      viewToggle: document.getElementById('viewToggle'),
+      // Modal elements
+      detailTitle: document.getElementById('detailTitle'),
+      detailIcon: document.getElementById('detailIcon'),
+      detailName: document.getElementById('detailName'),
+      detailSymbol: document.getElementById('detailSymbol'),
+      detailPrice: document.getElementById('detailPrice'),
+      detailChange24: document.getElementById('detailChange24'),
+      detailMcap: document.getElementById('detailMcap'),
+      detailVol: document.getElementById('detailVol'),
+      detailRank: document.getElementById('detailRank'),
+      sparklineCanvas: document.getElementById('sparklineCanvas'),
+      detailRange: document.getElementById('detailRange'),
+    };
+
+    // ====== UTIL ======
+    const fmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+    const fmt0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+    function currencySymbol(cur){
+      return {usd:'$', eur:'€', pkr:'₨'}[cur] || '';
+    }
+    function formatMoney(x){
+      if (x === null || x === undefined) return '—';
+      // abbreviate
+      const abs = Math.abs(x);
+      const sign = x < 0 ? '-' : '';
+      const sym = currencySymbol(state.currency);
+      if (abs >= 1e12) return `${sign}${sym}${fmt.format(abs/1e12)}T`;
+      if (abs >= 1e9)  return `${sign}${sym}${fmt.format(abs/1e9)}B`;
+      if (abs >= 1e6)  return `${sign}${sym}${fmt.format(abs/1e6)}M`;
+      if (abs >= 1e3)  return `${sign}${sym}${fmt.format(abs/1e3)}K`;
+      return `${sign}${sym}${fmt.format(abs)}`;
+    }
+    function formatPrice(x){
+      if (x === null || x === undefined) return '—';
+      const sym = currencySymbol(state.currency);
+      const digits = (x < 1) ? 6 : (x < 100 ? 4 : 2);
+      return `${sym}${new Intl.NumberFormat(undefined, {minimumFractionDigits: 2, maximumFractionDigits: digits}).format(x)}`;
+    }
+    function pct(x){
+      if (x === null || x === undefined) return '—';
+      return `${x > 0 ? '+' : ''}${x.toFixed(2)}%`;
+    }
+    function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
+    function nowStr(){
+      const d = new Date();
+      return d.toLocaleString();
+    }
+    function getWatchlist(){
+      try{ return JSON.parse(localStorage.getItem('watchlist') || '[]'); } catch{ return []; }
+    }
+    function setWatchlist(arr){
+      localStorage.setItem('watchlist', JSON.stringify(arr));
+    }
+    function toggleWatch(id){
+      const wl = new Set(getWatchlist());
+      wl.has(id) ? wl.delete(id) : wl.add(id);
+      setWatchlist([...wl]);
+      render(); // update stars
+    }
+    function isWatched(id){
+      const wl = getWatchlist();
+      return wl.includes(id);
+    }
+
+    // ====== FETCH ======
+    async function fetchCoins(){
+      const url = new URL(API_BASE + '/coins/markets');
+      url.searchParams.set('vs_currency', state.currency);
+      url.searchParams.set('order', 'market_cap_desc'); // fetch desc, sort locally for others
+      url.searchParams.set('per_page', DEFAULT_PER_PAGE);
+      url.searchParams.set('page', 1);
+      url.searchParams.set('sparkline', 'true');
+      url.searchParams.set('price_change_percentage', '1h,24h,7d');
+
+      const r = await fetch(url.toString(), { headers: { 'Accept': 'application/json' }});
+      if (!r.ok) {
+        throw new Error('Failed to fetch market data');
+      }
+      state.coins = await r.json();
+      state.lastFetchAt = Date.now();
+      els.lastUpdated.textContent = nowStr();
+    }
+
+    // ====== FILTER / SORT / PAGINATE ======
+    function applyViewFilter(list){
+      if (state.view === 'watchlist') {
+        const wl = new Set(getWatchlist());
+        return list.filter(c => wl.has(c.id));
+      }
+      return list;
+    }
+    function applySearch(list){
+      if (!state.search) return list;
+      const q = state.search.toLowerCase();
+      return list.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.symbol.toLowerCase().includes(q)
+      );
+    }
+    function applySort(list){
+      const by = state.order;
+      const arr = [...list];
+      const get = (k, o)=> (o[k] ?? 0);
+      switch(by){
+        case 'market_cap_desc': arr.sort((a,b)=> get('market_cap',b)-get('market_cap',a)); break;
+        case 'market_cap_asc':  arr.sort((a,b)=> get('market_cap',a)-get('market_cap',b)); break;
+        case 'volume_desc':     arr.sort((a,b)=> get('total_volume',b)-get('total_volume',a)); break;
+        case 'volume_asc':      arr.sort((a,b)=> get('total_volume',a)-get('total_volume',b)); break;
+        case 'price_desc':      arr.sort((a,b)=> get('current_price',b)-get('current_price',a)); break;
+        case 'price_asc':       arr.sort((a,b)=> get('current_price',a)-get('current_price',b)); break;
+        case 'change24_desc':   arr.sort((a,b)=> get('price_change_percentage_24h',b)-get('price_change_percentage_24h',a)); break;
+        case 'change24_asc':    arr.sort((a,b)=> get('price_change_percentage_24h',a)-get('price_change_percentage_24h',b)); break;
+      }
+      return arr;
+    }
+    function paginate(list){
+      const total = list.length;
+      const pages = Math.max(1, Math.ceil(total / state.pageSize));
+      state.page = Math.min(state.page, pages);
+      const start = (state.page - 1) * state.pageSize;
+      const rows = list.slice(start, start + state.pageSize);
+      return { rows, pages, total };
+    }
+
+    // ====== RENDER ======
+    function render(){
+      // pipeline
+      const list = applySort(applySearch(applyViewFilter(state.coins)));
+      state.filtered = list;
+      const { rows, pages, total } = paginate(list);
+      els.rowsCount.textContent = total;
+
+      // table rows
+      els.tableBody.innerHTML = rows.map((c, idx) => {
+        const i = (state.page-1) * state.pageSize + idx + 1;
+        const change24 = c.price_change_percentage_24h;
+        const klass24 = change24 >= 0 ? 'price-up' : 'price-down';
+        const change7d = (c.price_change_percentage_7d_in_currency ?? 0);
+        const klass7d = change7d >= 0 ? 'price-up' : 'price-down';
+        const watched = isWatched(c.id) ? 'active' : '';
+        return `
+          <tr data-id="${c.id}" class="row-click" style="cursor:pointer">
+            <td>${i}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="${c.image}" alt="${c.symbol} logo" width="24" height="24" loading="lazy">
+                <span class="fw-semibold">${c.name}</span>
+                <span class="badge-coin hide-sm">Rank #${c.market_cap_rank ?? '—'}</span>
+              </div>
+            </td>
+            <td class="hide-sm text-uppercase text-secondary">${c.symbol}</td>
+            <td>${formatPrice(c.current_price)}</td>
+            <td class="hide-sm ${klass24}">${pct(change24)}</td>
+            <td class="hide-sm ${klass7d}">${pct(change7d)}</td>
+            <td class="hide-sm">${formatMoney(c.total_volume)}</td>
+            <td class="hide-sm">${formatMoney(c.market_cap)}</td>
+            <td>
+              <canvas class="sparkline" width="140" height="40" data-spark="${(c.sparkline_in_7d?.price || []).join(',')}"></canvas>
+            </td>
+            <td>
+              <button class="watch-btn ${watched}" data-watch="${c.id}" title="Toggle watchlist">
+                <i class="bi ${watched ? 'bi-star-fill' : 'bi-star'}"></i>
+              </button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      // attach canvas drawing & row/listeners
+      document.querySelectorAll('canvas.sparkline').forEach(drawSparkline);
+      document.querySelectorAll('button[data-watch]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-watch');
+          toggleWatch(id);
+        });
+      });
+      document.querySelectorAll('tr.row-click').forEach(tr => {
+        tr.addEventListener('click', () => openDetails(tr.getAttribute('data-id')));
+      });
+
+      // pagination
+      renderPagination(pages);
+    }
+
+    function renderPagination(pages){
+      const p = state.page;
+      let html = '';
+      function pageItem(n, label=n, active=false, disabled=false){
+        return `<li class="page-item ${active?'active':''} ${disabled?'disabled':''}">
+          <a class="page-link" href="#" data-page="${n}">${label}</a></li>`;
+      }
+      html += pageItem(Math.max(1, p-1), '&laquo;', false, p===1);
+      const range = 2;
+      const start = Math.max(1, p - range);
+      const end = Math.min(pages, p + range);
+      for(let i=start; i<=end; i++){
+        html += pageItem(i, i, i===p, false);
+      }
+      html += pageItem(Math.min(pages, p+1), '&raquo;', false, p===pages);
+      els.pagination.innerHTML = html;
+      els.pagination.querySelectorAll('a[data-page]').forEach(a=>{
+        a.addEventListener('click', e=>{
+          e.preventDefault();
+          state.page = parseInt(a.getAttribute('data-page'));
+          render();
+        });
+      });
+    }
+
+    // ====== SPARKLINE ======
+    function drawSparkline(canvas){
+      const ctx = canvas.getContext('2d');
+      const data = canvas.getAttribute('data-spark').split(',').map(Number).filter(x=>!Number.isNaN(x));
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      if (!data.length) return;
+      const w = canvas.width, h = canvas.height, pad = 4;
+      const min = Math.min(...data), max = Math.max(...data);
+      const scaleX = (i)=> pad + (i/(data.length-1))*(w-2*pad);
+      const scaleY = (v)=> {
+        if (max === min) return h/2;
+        const t = (v - min) / (max - min);
+        return h - pad - t*(h-2*pad);
+      };
+      // gradient
+      const grd = ctx.createLinearGradient(0,0,0,h);
+      grd.addColorStop(0, 'rgba(52,211,153,0.8)');
+      grd.addColorStop(1, 'rgba(52,211,153,0.0)');
+      // line color based on trend
+      const up = data[data.length-1] >= data[0];
+      const lineColor = up ? '#34d399' : '#ef4444';
+      const fillColor = up ? grd : (function(){
+        const g = ctx.createLinearGradient(0,0,0,h);
+        g.addColorStop(0,'rgba(239,68,68,0.8)');
+        g.addColorStop(1,'rgba(239,68,68,0.0)');
+        return g;
+      })();
+
+      // path
+      ctx.beginPath();
+      ctx.moveTo(scaleX(0), scaleY(data[0]));
+      for (let i=1;i<data.length;i++){
+        ctx.lineTo(scaleX(i), scaleY(data[i]));
+      }
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // fill under curve
+      ctx.lineTo(scaleX(data.length-1), h - pad);
+      ctx.lineTo(scaleX(0), h - pad);
+      ctx.closePath();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+
+    // ====== DETAILS MODAL ======
+    function openDetails(id){
+      const c = state.coins.find(x => x.id === id);
+      if (!c) return;
+      els.detailTitle.textContent = `${c.name} (${c.symbol.toUpperCase()})`;
+      els.detailIcon.src = c.image;
+      els.detailIcon.alt = c.symbol + ' logo';
+      els.detailName.textContent = c.name;
+      els.detailSymbol.textContent = c.symbol.toUpperCase();
+      els.detailPrice.textContent = formatPrice(c.current_price);
+      const change24 = c.price_change_percentage_24h;
+      els.detailChange24.innerHTML = `<span class="${change24>=0?'price-up':'price-down'}">${pct(change24)}</span>`;
+      els.detailMcap.textContent = formatMoney(c.market_cap);
+      els.detailVol.textContent = formatMoney(c.total_volume);
+      els.detailRank.textContent = c.market_cap_rank ?? '—';
+
+      // sparkline modal (higher resolution)
+      const canvas = els.sparklineCanvas;
+      drawSparklineModal(canvas, c.sparkline_in_7d?.price || []);
+      const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+      modal.show();
+    }
+    function drawSparklineModal(canvas, data){
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.clientWidth; // responsive
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+      if (!data.length) return;
+      const pad = 10;
+      const min = Math.min(...data), max = Math.max(...data);
+      const sx = (i)=> pad + (i/(data.length-1))*(w-2*pad);
+      const sy = (v)=> {
+        if (max===min) return h/2;
+        const t = (v-min)/(max-min);
+        return h - pad - t*(h-2*pad);
+      };
+      // grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      for (let i=0;i<5;i++){
+        const y = pad + i*(h-2*pad)/4;
+        ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w-pad, y); ctx.stroke();
+      }
+      // line
+      const up = data[data.length-1] >= data[0];
+      ctx.beginPath();
+      ctx.moveTo(sx(0), sy(data[0]));
+      for(let i=1;i<data.length;i++) ctx.lineTo(sx(i), sy(data[i]));
+      ctx.strokeStyle = up ? '#34d399' : '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // ====== EXPORT CSV ======
+    function exportCSV(){
+      const headers = ['Rank','Name','Symbol','Price','24h %','7d %','Volume','Market Cap'];
+      const rows = state.filtered.map(c => [
+        c.market_cap_rank ?? '',
+        c.name,
+        c.symbol.toUpperCase(),
+        (c.current_price ?? ''),
+        (c.price_change_percentage_24h ?? ''),
+        (c.price_change_percentage_7d_in_currency ?? ''),
+        (c.total_volume ?? ''),
+        (c.market_cap ?? '')
+      ]);
+      let csv = headers.join(',') + '\n';
+      csv += rows.map(r => r.map(v => `"${(v ?? '').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `crypto_${state.currency}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ====== CONTROLS ======
+    const onSearch = debounce((v)=>{ state.search = v.trim(); state.page = 1; render(); }, 200);
+
+    els.searchInput.addEventListener('input', e => onSearch(e.target.value));
+    els.sortSelect.addEventListener('change', e => { state.order = e.target.value; render(); });
+    els.pageSizeSelect.addEventListener('change', e => { state.pageSize = parseInt(e.target.value); state.page = 1; render(); });
+    els.currencySelect.addEventListener('change', async e => {
+      state.currency = e.target.value;
+      await fetchCoins(); render();
+    });
+    els.refreshBtn.addEventListener('click', async () => { await fetchCoins(); render(); });
+    els.exportBtn.addEventListener('click', exportCSV);
+    els.autoRefresh.addEventListener('change', e => {
+      state.autoRefresh = e.target.checked;
+      els.autoRefreshLabel.textContent = state.autoRefresh ? 'On' : 'Off';
+    });
+    els.viewToggle.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        els.viewToggle.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        state.view = btn.getAttribute('data-view');
+        state.page = 1;
+        render();
+      });
+    });
+
+    // ====== AUTO REFRESH LOOP ======
+    setInterval(async ()=>{
+      if (!state.autoRefresh) return;
+      // avoid spamming if user refreshes manually
+      if (Date.now() - state.lastFetchAt < 5000) return;
+      try{ await fetchCoins(); render(); } catch(e){ /* ignore transient */ }
+    }, AUTO_REFRESH_MS);
+
+    // ====== INIT ======
+    (async function init(){
+      // Restore view & page size from localStorage (optional)
+      try{
+        const saved = JSON.parse(localStorage.getItem('tracker_prefs') || '{}');
+        if (saved.pageSize) { state.pageSize = saved.pageSize; els.pageSizeSelect.value = saved.pageSize; }
+        if (saved.currency) { state.currency = saved.currency; els.currencySelect.value = saved.currency; }
+        if (saved.order) { state.order = saved.order; els.sortSelect.value = saved.order; }
+      }catch{}
+      await fetchCoins();
+      render();
+    })();
+
+    // Persist user prefs
+    window.addEventListener('beforeunload', ()=>{
+      localStorage.setItem('tracker_prefs', JSON.stringify({
+        pageSize: state.pageSize, currency: state.currency, order: state.order
+      }));
+    });
+  </script>
+</body>
+</html>
