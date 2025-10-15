@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Ace Arcade — 4 Polished Games (HTML/CSS/JS)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Fonts & Bootstrap -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0a0f1f; --panel:#0f1530; --card:#111935; --text:#e5ecf5; --muted:#8fa1c7; --line:rgba(255,255,255,.14);
+    --accent:#7c5cff; --accent-2:#00d9ff; --good:#22c55e; --bad:#ef4444; --gold:#f59e0b; --glass:rgba(255,255,255,.06);
+    --shadow:0 24px 60px rgba(3,6,23,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f6f8ff; --panel:#ffffff; --card:#ffffff; --text:#0b1226; --muted:#475569; --line:rgba(2,6,23,.12);
+    --accent:#6157ff; --accent-2:#0ea5e9; --good:#16a34a; --bad:#dc2626; --gold:#d97706; --glass:rgba(2,6,23,.045);
+    --shadow:0 18px 40px rgba(2,6,23,.10);
+  }
+  html,body{height:100%}
+  body{
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 800px at -10% -20%, rgba(124,92,255,.25), transparent 60%) no-repeat,
+      radial-gradient(1000px 700px at 110% 0%, rgba(0,217,255,.18), transparent 60%) no-repeat,
+      var(--bg);
+    color:var(--text);
+  }
+  .navbar{ background:linear-gradient(180deg, rgba(15,21,48,.9), rgba(15,21,48,.7)); border-bottom:1px solid var(--line); backdrop-filter:blur(10px) }
+  [data-theme="light"] .navbar{ background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7)); }
+  .brand{
+    display:flex; align-items:center; gap:.6rem; font-weight:800;
+  }
+  .brand .logo{
+    width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:#fff;
+    background:conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent));
+    box-shadow:var(--shadow);
+  }
+  .toggle{ display:inline-flex; gap:.25rem; border:1px solid var(--line); border-radius:999px; padding:.25rem; background:var(--glass);}
+  .toggle button{ border:0; background:transparent; color:var(--muted); padding:.35rem .75rem; border-radius:999px; }
+  .toggle button.active{ background:var(--accent); color:#fff; }
+  .hero .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.45rem .7rem; border-radius:999px; background:var(--glass); border:1px solid var(--line); }
+  .glass{ background:linear-gradient(180deg, var(--glass), transparent); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); }
+  .game-card{ transition:.25s ease; cursor:pointer; }
+  .game-card:hover{ transform:translateY(-4px); box-shadow:0 26px 60px rgba(3,6,23,.35) }
+  .pill{ border:1px solid var(--line); background:var(--glass); border-radius:999px; padding:.35rem .7rem; }
+  .kbd{ border:1px solid var(--line); background:var(--glass); border-radius:6px; padding:.1rem .35rem; font-family:ui-monospace, Menlo, Consolas, monospace; }
+  .mini-logo{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:800; color:#fff; }
+  .g-2048{ background:linear-gradient(135deg,#6d28d9,#7c5cff); }
+  .g-snake{ background:linear-gradient(135deg,#06b6d4,#0ea5e9); }
+  .g-flap{  background:linear-gradient(135deg,#f59e0b,#fb7185); }
+  .g-memo{  background:linear-gradient(135deg,#10b981,#22c55e); }
+
+  /* Boards */
+  #board-2048{ width:340px; height:340px; background:var(--panel); border-radius:14px; padding:10px; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:auto; }
+  .cell{ background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:12px; display:grid; place-items:center; font-weight:800; }
+  .tile{ transition:transform .07s ease, background .2s ease, color .2s ease; font-size:24px; height:70px; }
+  @media (max-width:480px){ #board-2048{ width:300px; height:300px } .tile{height:60px;} }
+  canvas{ background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+  /* Memory */
+  #memory-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:10px; width:360px; margin:auto; }
+  .cardy{ aspect-ratio:1/1; border-radius:12px; position:relative; transform-style:preserve-3d; transition:transform .35s ease; cursor:pointer; }
+  .cardy-inner{ position:absolute; inset:0; border-radius:12px; display:grid; place-items:center; font-size:28px; font-weight:800; }
+  .front{ background:linear-gradient(180deg, rgba(124,92,255,.22), rgba(124,92,255,.06)); border:1px solid rgba(124,92,255,.35); }
+  .back{  background:linear-gradient(180deg, rgba(0,217,255,.22), rgba(0,217,255,.06)); border:1px solid rgba(0,217,255,.35); transform:rotateY(180deg); }
+  .flipped{ transform:rotateY(180deg); }
+  .win{ background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.35); border-radius:12px; padding:.6rem; }
+</style>
+</head>
+<body data-theme="dark">
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <div class="brand">
+        <div class="logo">A</div><span>Ace Arcade</span>
+      </div>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="toggle" id="themeToggle" role="tablist" aria-label="Theme toggle">
+          <button class="active" data-theme="dark" title="Dark"><i class="bi bi-moon-stars"></i></button>
+          <button data-theme="light" title="Light"><i class="bi bi-brightness-high"></i></button>
+        </div>
+        <span class="pill small">Sound: <span id="soundState" class="fw-semibold ms-1">On</span></span>
+        <button class="btn btn-outline-light btn-sm" id="toggleSound"><i class="bi bi-volume-up"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero container py-4">
+    <div class="glass p-4 p-md-5">
+      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+        <div>
+          <h1 class="display-6 fw-800 mb-2">Vibrant, responsive, and fun — all in one file.</h1>
+          <p class="text-secondary mb-3">Play 4 premium mini-games. High scores save locally. Works great on desktop and mobile.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="chip"><i class="bi bi-joystick"></i> 4 Games</span>
+            <span class="chip"><i class="bi bi-magic"></i> Light & Dark</span>
+            <span class="chip"><i class="bi bi-hdd"></i> Local High Scores</span>
+            <span class="chip"><i class="bi bi-keyboard"></i> Keyboard & Touch</span>
+          </div>
+        </div>
+        <a class="btn btn-primary btn-lg" style="background:linear-gradient(135deg,var(--accent),#4338ca); border:none" href="#hub"><i class="bi bi-grid-3x3-gap"></i> Game Hub</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HUB -->
+  <main id="hub" class="container my-4">
+    <div class="row g-3">
+      <!-- 2048 -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="glass p-3 game-card" data-open="view-2048">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <div class="mini-logo g-2048">2048</div>
+              <h5 class="mb-0 fw-bold">2048</h5>
+            </div>
+            <span class="pill">Best: <span id="hs-2048">0</span></span>
+          </div>
+          <p class="text-secondary mt-2 mb-0 small">Merge tiles to reach 2048. <span class="text-muted">Arrows/Swipe</span></p>
+        </div>
+      </div>
+      <!-- Snake -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="glass p-3 game-card" data-open="view-snake">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <div class="mini-logo g-snake"><i class="bi bi-bezier2"></i></div>
+              <h5 class="mb-0 fw-bold">Snake</h5>
+            </div>
+            <span class="pill">Best: <span id="hs-snake">0</span></span>
+          </div>
+          <p class="text-secondary mt-2 mb-0 small">Eat to grow, don’t crash. <span class="text-muted">WASD/Arrows</span></p>
+        </div>
+      </div>
+      <!-- Flappy -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="glass p-3 game-card" data-open="view-flap">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <div class="mini-logo g-flap"><i class="bi bi-boxes"></i></div>
+              <h5 class="mb-0 fw-bold">Flappy Square</h5>
+            </div>
+            <span class="pill">Best: <span id="hs-flap">0</span></span>
+          </div>
+          <p class="text-secondary mt-2 mb-0 small">Tap/Space to fly through gaps.</p>
+        </div>
+      </div>
+      <!-- Memory -->
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="glass p-3 game-card" data-open="view-memo">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <div class="mini-logo g-memo"><i class="bi bi-layers"></i></div>
+              <h5 class="mb-0 fw-bold">Memory Match</h5>
+            </div>
+            <span class="pill">Best: <span id="hs-memo">—</span></span>
+          </div>
+          <p class="text-secondary mt-2 mb-0 small">Flip cards to find all pairs.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 2048 VIEW -->
+  <section id="view-2048" class="container my-4" hidden>
+    <div class="glass p-3 p-md-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="mini-logo g-2048">2048</div>
+          <h4 class="mb-0">2048</h4>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="pill">Score: <span id="z-score">0</span></span>
+          <span class="pill">Best: <span id="z-best">0</span></span>
+          <button class="btn btn-outline-light btn-sm" id="z-undo"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+          <button class="btn btn-primary btn-sm" id="z-new"><i class="bi bi-stars"></i> New</button>
+          <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
+        </div>
+      </div>
+      <div class="text-secondary small mt-2">Use <span class="kbd">←</span><span class="kbd">↑</span><span class="kbd">→</span><span class="kbd">↓</span> or swipe.</div>
+      <div class="mt-3 d-flex justify-content-center">
+        <div id="board-2048" tabindex="0" aria-label="2048 board"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SNAKE VIEW -->
+  <section id="view-snake" class="container my-4" hidden>
+    <div class="glass p-3 p-md-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="mini-logo g-snake"><i class="bi bi-bezier2"></i></div>
+          <h4 class="mb-0">Snake</h4>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="pill">Score: <span id="s-score">0</span></span>
+          <span class="pill">Best: <span id="s-best">0</span></span>
+          <select id="s-speed" class="form-select form-select-sm">
+            <option value="130">Slow</option><option value="90" selected>Normal</option><option value="60">Fast</option>
+          </select>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="s-wrap" checked>
+            <label class="form-check-label" for="s-wrap">Wrap</label>
+          </div>
+          <button class="btn btn-primary btn-sm" id="s-new"><i class="bi bi-stars"></i> New</button>
+          <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
+        </div>
+      </div>
+      <div class="text-secondary small mt-2">Controls: <span class="kbd">W/A/S/D</span> or arrows. <span class="kbd">P</span> pause.</div>
+      <div class="mt-3 d-flex justify-content-center">
+        <canvas id="s-canvas" width="360" height="360"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLAPPY VIEW -->
+  <section id="view-flap" class="container my-4" hidden>
+    <div class="glass p-3 p-md-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="mini-logo g-flap"><i class="bi bi-boxes"></i></div>
+          <h4 class="mb-0">Flappy Square</h4>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="pill">Score: <span id="f-score">0</span></span>
+          <span class="pill">Best: <span id="f-best">0</span></span>
+          <button class="btn btn-primary btn-sm" id="f-start"><i class="bi bi-play-circle"></i> Start</button>
+          <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
+        </div>
+      </div>
+      <div class="text-secondary small mt-2">Click / tap / <span class="kbd">Space</span> to flap. <span class="kbd">P</span> pause.</div>
+      <div class="mt-3 d-flex justify-content-center">
+        <canvas id="f-canvas" width="360" height="440"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEMORY VIEW -->
+  <section id="view-memo" class="container my-4" hidden>
+    <div class="glass p-3 p-md-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="mini-logo g-memo"><i class="bi bi-layers"></i></div>
+          <h4 class="mb-0">Memory Match</h4>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="pill">Time: <span id="m-time">0</span>s</span>
+          <span class="pill">Moves: <span id="m-moves">0</span></span>
+          <span class="pill">Best: <span id="m-best">—</span></span>
+          <button class="btn btn-primary btn-sm" id="m-new"><i class="bi bi-stars"></i> New</button>
+          <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
+        </div>
+      </div>
+      <div class="text-secondary small mt-2">Flip two cards to find a pair.</div>
+      <div class="mt-3 d-flex justify-content-center"><div id="memory-grid"></div></div>
+      <div id="m-win" class="win mt-3 d-none"><i class="bi bi-trophy"></i> You matched all pairs! <span id="m-final"></span></div>
+    </div>
+  </section>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    /* ====== Helpers & State ====== */
+    const qs = s => document.querySelector(s);
+    const qsa = s => [...document.querySelectorAll(s)];
+    const store = {
+      get(k, d){ try { return JSON.parse(localStorage.getItem(k) ?? JSON.stringify(d)); } catch { return d; } },
+      set(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+    };
+    const HS = { z:'ace_hs_2048', s:'ace_hs_snake', f:'ace_hs_flap', m:'ace_hs_memo' };
+    const themeKey = 'ace_theme';
+    /* Sound (tiny synth) */
+    const SFX = (()=>{
+      let on = store.get('ace_sound_on', true), ctx;
+      function beep(f=540, t=.06, type='sine', vol=0.06){
+        if(!on) return;
+        ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = type; o.frequency.value = f; g.gain.value = vol;
+        o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>o.stop(), t*1000);
+      }
+      return {
+        move(){ beep(420,.04,'square',.04); },
+        coin(){ beep(880,.07,'triangle',.06); },
+        bad(){ beep(160,.14,'square',.07); },
+        good(){ beep(560,.11,'sine',.07); },
+        toggle(){ on=!on; store.set('ace_sound_on', on); return on; },
+        enabled(){ return on; }
+      }
+    })();
+
+    /* ====== Theme & Header controls ====== */
+    function setTheme(t){ document.body.setAttribute('data-theme', t); store.set(themeKey, t); 
+      qsa('#themeToggle button').forEach(b=> b.classList.toggle('active', b.dataset.theme===t));
+    }
+    setTheme(store.get(themeKey, 'dark'));
+    qsa('#themeToggle button').forEach(b=> b.addEventListener('click', ()=> setTheme(b.dataset.theme)));
+    qs('#soundState').textContent = SFX.enabled() ? 'On' : 'Off';
+    qs('#toggleSound').onclick = ()=> qs('#soundState').textContent = SFX.toggle() ? 'On' : 'Off';
+
+    /* ====== Router (Hub <-> Views) ====== */
+    const views = ['view-2048','view-snake','view-flap','view-memo'];
+    function openView(id){
+      views.forEach(v => qs('#'+v).hidden = true);
+      qs('#'+id).hidden = false;
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    qsa('[data-open]').forEach(card => card.addEventListener('click', () => openView(card.dataset.open)));
+    qsa('[data-back]').forEach(b => b.addEventListener('click', () => {
+      views.forEach(v => qs('#'+v).hidden = true);
+      location.hash = '#hub';
+    }));
+
+    /* ====== High score overview ====== */
+    function refreshHubHS(){
+      qs('#hs-2048').textContent = store.get(HS.z, 0);
+      qs('#hs-snake').textContent = store.get(HS.s, 0);
+      qs('#hs-flap').textContent  = store.get(HS.f, 0);
+      const mb = store.get(HS.m, null);
+      qs('#hs-memo').textContent  = mb ? `${mb.time}s / ${mb.moves}` : '—';
+    }
+    refreshHubHS();
+
+    /* ========================
+       2048
+       ======================== */
+    const zBoard = qs('#board-2048');
+    const zScoreEl = qs('#z-score'), zBestEl = qs('#z-best');
+    const SIZE = 4;
+    let zState = { grid:[], score:0, prev:null };
+
+    function zColor(v){
+      const map={2:'#4338ca',4:'#2563eb',8:'#22d3ee',16:'#10b981',32:'#84cc16',64:'#f59e0b',128:'#ef4444',256:'#ec4899',512:'#8b5cf6',1024:'#06b6d4',2048:'#fbbf24'};
+      return map[v] || '#a855f7';
+    }
+    function zReset(){
+      zState.grid = Array.from({length:SIZE},()=> Array(SIZE).fill(0));
+      zState.score = 0; zState.prev = null;
+      zAddTile(); zAddTile(); zRender();
+      zBoard.focus();
+    }
+    function zAddTile(){
+      const empty=[];
+      for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++) if(!zState.grid[r][c]) empty.push([r,c]);
+      if(!empty.length) return;
+      const [r,c] = empty[Math.floor(Math.random()*empty.length)];
+      zState.grid[r][c] = Math.random()<0.9?2:4;
+    }
+    function zRender(){
+      zBoard.innerHTML=''; 
+      for(let r=0;r<SIZE;r++){
+        for(let c=0;c<SIZE;c++){
+          const v = zState.grid[r][c];
+          const d = document.createElement('div');
+          d.className='cell tile';
+          d.style.background = v ? zColor(v) : 'rgba(255,255,255,.06)';
+          d.style.color = v>=8 ? '#0b1020' : '#f8fbff';
+          d.textContent = v || '';
+          zBoard.appendChild(d);
+        }
+      }
+      zScoreEl.textContent = zState.score;
+      const best = store.get(HS.z, 0);
+      if(zState.score>best){ store.set(HS.z, zState.score); zBestEl.textContent=zState.score; refreshHubHS(); }
+      else zBestEl.textContent = best;
+    }
+    function zRotate(){
+      const g=zState.grid, n=SIZE, res=Array.from({length:n},()=>Array(n).fill(0));
+      for(let r=0;r<n;r++)for(let c=0;c<n;c++) res[c][n-1-r]=g[r][c];
+      zState.grid=res;
+    }
+    function zCanMove(){
+      for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+        const v=zState.grid[r][c]; if(!v) return true;
+        if(r<SIZE-1 && zState.grid[r+1][c]===v) return true;
+        if(c<SIZE-1 && zState.grid[r][c+1]===v) return true;
+      }
+      return false;
+    }
+    function zMove(dir){
+      let moved=false; zState.prev = JSON.parse(JSON.stringify(zState.grid));
+      const times = {left:0, up:1, right:2, down:3}[dir];
+      for(let i=0;i<times;i++) zRotate();
+      for(let r=0;r<SIZE;r++){
+        const row=zState.grid[r].filter(v=>v);
+        for(let c=0;c<row.length-1;c++) if(row[c]===row[c+1]){ row[c]*=2; zState.score+=row[c]; row.splice(c+1,1); SFX.good(); }
+        while(row.length<SIZE) row.push(0);
+        if(row.some((v,i)=>v!==zState.grid[r][i])) moved=true;
+        zState.grid[r]=row;
+      }
+      for(let i=0;i<(4-times)%4;i++) zRotate();
+      if(moved){ zAddTile(); zRender(); SFX.move(); if(!zCanMove()) { SFX.bad(); alert('Game Over! Score: '+zState.score); } }
+    }
+    qs('#z-new').addEventListener('click', zReset);
+    qs('#z-undo').addEventListener('click', ()=>{ if(zState.prev){ zState.grid=zState.prev; zState.prev=null; zRender(); }});
+    zBoard.addEventListener('keydown', e=>{
+      const k=e.key;
+      if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k)){ e.preventDefault(); zMove(k.replace('Arrow','').toLowerCase()); }
+    });
+    // swipe
+    let t=null;
+    zBoard.addEventListener('touchstart', e=> t=e.touches[0]);
+    zBoard.addEventListener('touchend', e=>{
+      if(!t) return; const dx=e.changedTouches[0].clientX-t.clientX, dy=e.changedTouches[0].clientY-t.clientY;
+      if(Math.abs(dx)>Math.abs(dy)) zMove(dx>0?'right':'left'); else zMove(dy>0?'down':'up'); t=null;
+    });
+    // open hook
+    qs('[data-open="view-2048"]').addEventListener('click', ()=>{ zReset(); zBestEl.textContent = store.get(HS.z,0); });
+
+    /* ========================
+       Snake
+       ======================== */
+    const sCanvas = qs('#s-canvas'), sCtx = sCanvas.getContext('2d');
+    const GRID = 18; // 360 / 20
+    let sTimer=null, sDir='right', sSnake=[], sFood=null, sScore=0, sPaused=false;
+
+    function sRand(){ return {x: Math.floor(Math.random()*GRID), y: Math.floor(Math.random()*GRID)}; }
+    function sDraw(){
+      sCtx.fillStyle='#0b1126'; sCtx.fillRect(0,0,360,360);
+      sCtx.strokeStyle='rgba(255,255,255,.04)'; sCtx.lineWidth=1;
+      for(let i=1;i<GRID;i++){ sCtx.beginPath(); sCtx.moveTo(i*20,0); sCtx.lineTo(i*20,360); sCtx.stroke();
+        sCtx.beginPath(); sCtx.moveTo(0,i*20); sCtx.lineTo(360,i*20); sCtx.stroke(); }
+      // food
+      sRect(sFood.x, sFood.y, '#22d3ee');
+      // snake
+      sRect(sSnake[0].x, sSnake[0].y, '#f59e0b');
+      for(let i=1;i<sSnake.length;i++) sRect(sSnake[i].x, sSnake[i].y, '#7c5cff');
+    }
+    function sRect(x,y,color){ sCtx.fillStyle=color; sCtx.fillRect(x*20+2, y*20+2, 16,16); }
+    function sStep(){
+      if(sPaused) return;
+      const wrap = qs('#s-wrap').checked;
+      const head={...sSnake[0]};
+      if(sDir==='right') head.x++; if(sDir==='left') head.x--;
+      if(sDir==='up') head.y--; if(sDir==='down') head.y++;
+      if(wrap){ head.x=(head.x+GRID)%GRID; head.y=(head.y+GRID)%GRID; }
+      else if(head.x<0||head.y<0||head.x>=GRID||head.y>=GRID) return sEnd();
+      if(sSnake.some(p=>p.x===head.x && p.y===head.y)) return sEnd();
+      sSnake.unshift(head);
+      if(head.x===sFood.x && head.y===sFood.y){ sScore++; qs('#s-score').textContent=sScore; SFX.coin(); sFood=sRand(); }
+      else sSnake.pop();
+      sDraw();
+    }
+    function sReset(){
+      sDir='right'; sSnake=[{x:5,y:9},{x:4,y:9},{x:3,y:9}]; sFood=sRand();
+      sScore=0; qs('#s-score').textContent=sScore; sPaused=false;
+      sDraw(); sLoop();
+    }
+    function sLoop(){ if(sTimer) clearInterval(sTimer); sTimer=setInterval(sStep, parseInt(qs('#s-speed').value)); }
+    function sEnd(){
+      SFX.bad(); clearInterval(sTimer);
+      const best=store.get(HS.s,0); if(sScore>best){ store.set(HS.s, sScore); qs('#s-best').textContent=sScore; refreshHubHS(); }
+      alert('Snake over! Score: '+sScore);
+    }
+    document.addEventListener('keydown', e=>{
+      if(qs('#view-snake').hidden) return;
+      const k=e.key.toLowerCase();
+      if(['arrowup','w'].includes(k) && sDir!=='down') sDir='up';
+      if(['arrowdown','s'].includes(k) && sDir!=='up') sDir='down';
+      if(['arrowleft','a'].includes(k) && sDir!=='right') sDir='left';
+      if(['arrowright','d'].includes(k) && sDir!=='left') sDir='right';
+      if(k==='p') sPaused=!sPaused;
+    });
+    qs('#s-new').addEventListener('click', sReset);
+    qs('#s-speed').addEventListener('change', sLoop);
+    qs('[data-open="view-snake"]').addEventListener('click', ()=>{ sReset(); qs('#s-best').textContent=store.get(HS.s,0); });
+
+    /* ========================
+       Flappy Square
+       ======================== */
+    const fCanvas = qs('#f-canvas'), fCtx = fCanvas.getContext('2d');
+    let fBird, fPipes, fScore, fAnim=null, fRunning=false, fPaused=false, fLast=0;
+    function fReset(){ fBird={x:80,y:220,vy:0}; fPipes=[]; fScore=0; qs('#f-score').textContent=fScore; fPaused=false; [0,1,2].forEach(_=>fSpawn()); fDraw(); }
+    function fSpawn(){
+      const gap=120, mid = Math.random()*220 + 40; const x=(fPipes.length?fPipes[fPipes.length-1].x:360)+180;
+      fPipes.push({x, top:mid-gap/2, bottom:mid+gap/2, passed:false});
+    }
+    function fDraw(){
+      fCtx.fillStyle='#0b1126'; fCtx.fillRect(0,0,360,440); fCtx.fillStyle='#0e1530'; fCtx.fillRect(0,420,360,20);
+      fPipes.forEach(p=>{ fCtx.fillStyle='#22d3ee'; fCtx.fillRect(p.x,0,40,p.top); fCtx.fillRect(p.x,p.bottom,40,420-p.bottom); });
+      fCtx.fillStyle='#f59e0b'; fCtx.fillRect(fBird.x-8, fBird.y-8, 16,16);
+    }
+    function fLoop(ts){
+      if(!fRunning) return;
+      if(!fLast) fLast=ts; const dt=(ts-fLast)/16.666; fLast=ts;
+      if(!fPaused){
+        fBird.vy += 0.5*dt; fBird.y += fBird.vy*dt;
+        fPipes.forEach(p=> p.x -= 2.2*dt);
+        if(fPipes[0].x < -50) fPipes.shift();
+        if(fPipes[fPipes.length-1].x < 220) fSpawn();
+        const hitGround = fBird.y > 412 || fBird.y < 0;
+        let hitPipe=false;
+        fPipes.forEach(p=>{
+          if(!p.passed && p.x+40 < fBird.x){ p.passed=true; fScore++; qs('#f-score').textContent=fScore; SFX.coin(); }
+          if(fBird.x+8>p.x && fBird.x-8<p.x+40){ if(fBird.y-8 < p.top || fBird.y+8 > p.bottom) hitPipe=true; }
+        });
+        if(hitGround || hitPipe) return fEnd();
+      }
+      fDraw(); fAnim = requestAnimationFrame(fLoop);
+    }
+    function fEnd(){
+      fRunning=false; cancelAnimationFrame(fAnim); SFX.bad();
+      const best=store.get(HS.f,0); if(fScore>best){ store.set(HS.f, fScore); qs('#f-best').textContent=fScore; refreshHubHS(); }
+      alert('Crash! Score: '+fScore);
+    }
+    function fFlap(){ if(!fRunning) return; fBird.vy = -6; SFX.move(); }
+    qs('#f-start').addEventListener('click', ()=>{ fReset(); fRunning=true; fLast=0; qs('#f-best').textContent=store.get(HS.f,0); fLoop(0); });
+    fCanvas.addEventListener('mousedown', fFlap); fCanvas.addEventListener('touchstart', fFlap);
+    document.addEventListener('keydown', e=>{
+      if(qs('#view-flap').hidden) return;
+      if(e.code==='Space'){ e.preventDefault(); fFlap(); }
+      if(e.key.toLowerCase()==='p') fPaused=!fPaused;
+    });
+    qs('[data-open="view-flap"]').addEventListener('click', ()=>{ fReset(); qs('#f-best').textContent=store.get(HS.f,0); });
+
+    /* ========================
+       Memory Match
+       ======================== */
+    const mGrid = qs('#memory-grid'), mTimeEl=qs('#m-time'), mMovesEl=qs('#m-moves'),
+          mBestEl=qs('#m-best'), mWin=qs('#m-win'), mFinal=qs('#m-final');
+    const MEMO_SET=['🍎','🍋','🍇','🍓','🍉','🥑','🍒','🍍'];
+    let mCards=[], mFirst=null, mLock=false, mMoves=0, mTime=0, mTimer=null, mMatched=0;
+    function mReset(){
+      mCards=[]; mFirst=null; mLock=false; mMoves=0; mTime=0; mMatched=0;
+      clearInterval(mTimer); mTimer=setInterval(()=>{ mTime++; mTimeEl.textContent=mTime; },1000);
+      mTimeEl.textContent='0'; mMovesEl.textContent='0'; mWin.classList.add('d-none');
+      const deck=[...MEMO_SET, ...MEMO_SET].sort(()=>Math.random()-.5);
+      mGrid.innerHTML='';
+      deck.forEach((em)=>{
+        const card=document.createElement('div'); card.className='cardy';
+        card.innerHTML=`<div class="cardy-inner front"></div><div class="cardy-inner back">${em}</div>`;
+        card.dataset.val=em; card.addEventListener('click', ()=> mFlip(card));
+        mGrid.appendChild(card); mCards.push(card);
+      });
+      const best=store.get(HS.m,null); mBestEl.textContent= best ? `${best.time}s / ${best.moves}` : '—';
+    }
+    function mFlip(card){
+      if(mLock || card.classList.contains('matched') || card===mFirst) return;
+      card.classList.add('flipped'); SFX.move();
+      if(!mFirst){ mFirst=card; return; }
+      mMoves++; mMovesEl.textContent=mMoves;
+      if(card.dataset.val===mFirst.dataset.val){
+        SFX.good();
+        setTimeout(()=>{ card.classList.add('matched'); mFirst.classList.add('matched'); mFirst=null; mMatched++; if(mMatched===MEMO_SET.length) mWinGame(); },200);
+      }else{
+        mLock=true; setTimeout(()=>{ card.classList.remove('flipped'); mFirst.classList.remove('flipped'); mFirst=null; mLock=false; },600);
+      }
+    }
+    function mWinGame(){
+      clearInterval(mTimer); SFX.coin();
+      mFinal.textContent=`Time ${mTime}s · Moves ${mMoves}`; mWin.classList.remove('d-none');
+      const best=store.get(HS.m,null);
+      if(!best || mTime<best.time || (mTime===best.time && mMoves<best.moves)){ store.set(HS.m,{time:mTime,moves:mMoves}); refreshHubHS(); }
+    }
+    qs('#m-new').addEventListener('click', mReset);
+    qs('[data-open="view-memo"]').addEventListener('click', mReset);
+
+    /* ====== Initial Hub state ====== */
+    // nothing selected at load
+
+  });
+  </script>
+</body>
+</html>
