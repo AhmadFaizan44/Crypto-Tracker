@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Ace Arcade — 4 Polished Games (HTML/CSS/JS)</title>
+<title>Ace Arcade — 4 Polished Games (Fixed + Fullscreen)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <!-- Fonts & Bootstrap -->
@@ -33,15 +33,10 @@
   }
   .navbar{ background:linear-gradient(180deg, rgba(15,21,48,.9), rgba(15,21,48,.7)); border-bottom:1px solid var(--line); backdrop-filter:blur(10px) }
   [data-theme="light"] .navbar{ background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7)); }
-  .brand{
-    display:flex; align-items:center; gap:.6rem; font-weight:800;
-  }
-  .brand .logo{
-    width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:#fff;
-    background:conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent));
-    box-shadow:var(--shadow);
-  }
-  .toggle{ display:inline-flex; gap:.25rem; border:1px solid var(--line); border-radius:999px; padding:.25rem; background:var(--glass);}
+  .brand{ display:flex; align-items:center; gap:.6rem; font-weight:800; }
+  .brand .logo{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:#fff;
+    background:conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent)); box-shadow:var(--shadow); }
+  .toggle{ display:inline-flex; gap:.25rem; border:1px solid var(--line); border-radius:999px; padding:.25rem; background:var(--glass);}  
   .toggle button{ border:0; background:transparent; color:var(--muted); padding:.35rem .75rem; border-radius:999px; }
   .toggle button.active{ background:var(--accent); color:#fff; }
   .hero .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.45rem .7rem; border-radius:999px; background:var(--glass); border:1px solid var(--line); }
@@ -70,6 +65,12 @@
   .back{  background:linear-gradient(180deg, rgba(0,217,255,.22), rgba(0,217,255,.06)); border:1px solid rgba(0,217,255,.35); transform:rotateY(180deg); }
   .flipped{ transform:rotateY(180deg); }
   .win{ background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.35); border-radius:12px; padding:.6rem; }
+  
+  /* Fullscreen helpers */
+  .fs-container{ position:relative; }
+  .fs-floating{ position:absolute; top:10px; right:10px; display:flex; gap:.4rem; z-index:5; }
+  .fs-floating .btn{ padding:.35rem .55rem; }
+  .fs-active{ outline: 2px solid var(--accent-2); }
 </style>
 </head>
 <body data-theme="dark">
@@ -169,7 +170,11 @@
 
   <!-- 2048 VIEW -->
   <section id="view-2048" class="container my-4" hidden>
-    <div class="glass p-3 p-md-4">
+    <div class="glass p-3 p-md-4 fs-container" id="fs-2048">
+      <div class="fs-floating">
+        <button class="btn btn-outline-light btn-sm" data-fs="fs-2048" title="Fullscreen"><i class="bi bi-arrows-fullscreen"></i></button>
+        <button class="btn btn-outline-light btn-sm" id="z-quick-new" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
           <div class="mini-logo g-2048">2048</div>
@@ -183,7 +188,7 @@
           <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
         </div>
       </div>
-      <div class="text-secondary small mt-2">Use <span class="kbd">←</span><span class="kbd">↑</span><span class="kbd">→</span><span class="kbd">↓</span> or swipe.</div>
+      <div class="text-secondary small mt-2">Use <span class="kbd">←</span><span class="kbd">↑</span><span class="kbd">→</span><span class="kbd">↓</span> or swipe. <span class="ms-2">Press <span class="kbd">Esc</span> to exit fullscreen.</span></div>
       <div class="mt-3 d-flex justify-content-center">
         <div id="board-2048" tabindex="0" aria-label="2048 board"></div>
       </div>
@@ -192,7 +197,11 @@
 
   <!-- SNAKE VIEW -->
   <section id="view-snake" class="container my-4" hidden>
-    <div class="glass p-3 p-md-4">
+    <div class="glass p-3 p-md-4 fs-container" id="fs-snake">
+      <div class="fs-floating">
+        <button class="btn btn-outline-light btn-sm" data-fs="fs-snake" title="Fullscreen"><i class="bi bi-arrows-fullscreen"></i></button>
+        <button class="btn btn-outline-light btn-sm" id="s-quick-new" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
           <div class="mini-logo g-snake"><i class="bi bi-bezier2"></i></div>
@@ -212,7 +221,7 @@
           <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
         </div>
       </div>
-      <div class="text-secondary small mt-2">Controls: <span class="kbd">W/A/S/D</span> or arrows. <span class="kbd">P</span> pause.</div>
+      <div class="text-secondary small mt-2">Controls: <span class="kbd">W/A/S/D</span> or arrows. <span class="kbd">P</span> pause. <span class="ms-2">Press <span class="kbd">Esc</span> to exit fullscreen.</span></div>
       <div class="mt-3 d-flex justify-content-center">
         <canvas id="s-canvas" width="360" height="360"></canvas>
       </div>
@@ -221,7 +230,11 @@
 
   <!-- FLAPPY VIEW -->
   <section id="view-flap" class="container my-4" hidden>
-    <div class="glass p-3 p-md-4">
+    <div class="glass p-3 p-md-4 fs-container" id="fs-flap">
+      <div class="fs-floating">
+        <button class="btn btn-outline-light btn-sm" data-fs="fs-flap" title="Fullscreen"><i class="bi bi-arrows-fullscreen"></i></button>
+        <button class="btn btn-outline-light btn-sm" id="f-restart" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
           <div class="mini-logo g-flap"><i class="bi bi-boxes"></i></div>
@@ -234,7 +247,7 @@
           <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
         </div>
       </div>
-      <div class="text-secondary small mt-2">Click / tap / <span class="kbd">Space</span> to flap. <span class="kbd">P</span> pause.</div>
+      <div class="text-secondary small mt-2">Click / tap / <span class="kbd">Space</span> to flap. <span class="kbd">P</span> pause. <span class="ms-2">Press <span class="kbd">Esc</span> to exit fullscreen.</span></div>
       <div class="mt-3 d-flex justify-content-center">
         <canvas id="f-canvas" width="360" height="440"></canvas>
       </div>
@@ -243,7 +256,11 @@
 
   <!-- MEMORY VIEW -->
   <section id="view-memo" class="container my-4" hidden>
-    <div class="glass p-3 p-md-4">
+    <div class="glass p-3 p-md-4 fs-container" id="fs-memo">
+      <div class="fs-floating">
+        <button class="btn btn-outline-light btn-sm" data-fs="fs-memo" title="Fullscreen"><i class="bi bi-arrows-fullscreen"></i></button>
+        <button class="btn btn-outline-light btn-sm" id="m-quick-new" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
           <div class="mini-logo g-memo"><i class="bi bi-layers"></i></div>
@@ -257,7 +274,7 @@
           <button class="btn btn-outline-light btn-sm" data-back><i class="bi bi-arrow-left"></i> Hub</button>
         </div>
       </div>
-      <div class="text-secondary small mt-2">Flip two cards to find a pair.</div>
+      <div class="text-secondary small mt-2">Flip two cards to find a pair. <span class="ms-2">Press <span class="kbd">Esc</span> to exit fullscreen.</span></div>
       <div class="mt-3 d-flex justify-content-center"><div id="memory-grid"></div></div>
       <div id="m-win" class="win mt-3 d-none"><i class="bi bi-trophy"></i> You matched all pairs! <span id="m-final"></span></div>
     </div>
@@ -277,6 +294,18 @@
     };
     const HS = { z:'ace_hs_2048', s:'ace_hs_snake', f:'ace_hs_flap', m:'ace_hs_memo' };
     const themeKey = 'ace_theme';
+
+    /* ====== Fullscreen util ====== */
+    function toggleFullscreenById(containerId){
+      const el = qs('#' + containerId);
+      if(!el) return;
+      const isFs = document.fullscreenElement === el;
+      if(isFs){ document.exitFullscreen?.(); el.classList.remove('fs-active'); }
+      else { el.requestFullscreen?.(); el.classList.add('fs-active'); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    }
+    qsa('[data-fs]').forEach(btn => btn.addEventListener('click', ()=> toggleFullscreenById(btn.dataset.fs)));
+    document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && document.fullscreenElement){ document.exitFullscreen?.(); } });
+
     /* Sound (tiny synth) */
     const SFX = (()=>{
       let on = store.get('ace_sound_on', true), ctx;
@@ -309,13 +338,17 @@
     /* ====== Router (Hub <-> Views) ====== */
     const views = ['view-2048','view-snake','view-flap','view-memo'];
     function openView(id){
+      // Cleanup timers/loops when switching
+      snakeCleanup(); flappyCleanup(); memoryCleanup();
       views.forEach(v => qs('#'+v).hidden = true);
       qs('#'+id).hidden = false;
       window.scrollTo({top:0, behavior:'smooth'});
     }
     qsa('[data-open]').forEach(card => card.addEventListener('click', () => openView(card.dataset.open)));
     qsa('[data-back]').forEach(b => b.addEventListener('click', () => {
+      snakeCleanup(); flappyCleanup(); memoryCleanup();
       views.forEach(v => qs('#'+v).hidden = true);
+      document.exitFullscreen?.();
       location.hash = '#hub';
     }));
 
@@ -330,7 +363,7 @@
     refreshHubHS();
 
     /* ========================
-       2048
+       2048 (bug-fixed undo, restart shortcut)
        ======================== */
     const zBoard = qs('#board-2048');
     const zScoreEl = qs('#z-score'), zBestEl = qs('#z-best');
@@ -386,7 +419,7 @@
       return false;
     }
     function zMove(dir){
-      let moved=false; zState.prev = JSON.parse(JSON.stringify(zState.grid));
+      let moved=false; zState.prev = { grid: JSON.parse(JSON.stringify(zState.grid)), score: zState.score };
       const times = {left:0, up:1, right:2, down:3}[dir];
       for(let i=0;i<times;i++) zRotate();
       for(let r=0;r<SIZE;r++){
@@ -397,10 +430,11 @@
         zState.grid[r]=row;
       }
       for(let i=0;i<(4-times)%4;i++) zRotate();
-      if(moved){ zAddTile(); zRender(); SFX.move(); if(!zCanMove()) { SFX.bad(); alert('Game Over! Score: '+zState.score); } }
+      if(moved){ zAddTile(); zRender(); SFX.move(); if(!zCanMove()) { SFX.bad(); setTimeout(()=>alert('Game Over! Score: '+zState.score), 10); } }
     }
     qs('#z-new').addEventListener('click', zReset);
-    qs('#z-undo').addEventListener('click', ()=>{ if(zState.prev){ zState.grid=zState.prev; zState.prev=null; zRender(); }});
+    qs('#z-quick-new').addEventListener('click', zReset);
+    qs('#z-undo').addEventListener('click', ()=>{ if(zState.prev){ zState.grid=zState.prev.grid; zState.score=zState.prev.score; zState.prev=null; zRender(); }});
     zBoard.addEventListener('keydown', e=>{
       const k=e.key;
       if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k)){ e.preventDefault(); zMove(k.replace('Arrow','').toLowerCase()); }
@@ -416,13 +450,17 @@
     qs('[data-open="view-2048"]').addEventListener('click', ()=>{ zReset(); zBestEl.textContent = store.get(HS.z,0); });
 
     /* ========================
-       Snake
+       Snake (bug-fixed food spawn + cleanup + restart shortcut)
        ======================== */
     const sCanvas = qs('#s-canvas'), sCtx = sCanvas.getContext('2d');
     const GRID = 18; // 360 / 20
     let sTimer=null, sDir='right', sSnake=[], sFood=null, sScore=0, sPaused=false;
 
-    function sRand(){ return {x: Math.floor(Math.random()*GRID), y: Math.floor(Math.random()*GRID)}; }
+    function sRand(){
+      // ensure food is not on snake
+      let p; do { p = {x: Math.floor(Math.random()*GRID), y: Math.floor(Math.random()*GRID)} } while(sSnake.some(q=>q.x===p.x && q.y===p.y));
+      return p;
+    }
     function sDraw(){
       sCtx.fillStyle='#0b1126'; sCtx.fillRect(0,0,360,360);
       sCtx.strokeStyle='rgba(255,255,255,.04)'; sCtx.lineWidth=1;
@@ -458,8 +496,10 @@
     function sEnd(){
       SFX.bad(); clearInterval(sTimer);
       const best=store.get(HS.s,0); if(sScore>best){ store.set(HS.s, sScore); qs('#s-best').textContent=sScore; refreshHubHS(); }
-      alert('Snake over! Score: '+sScore);
+      setTimeout(()=>alert('Snake over! Score: '+sScore), 10);
     }
+    function snakeCleanup(){ if(sTimer){ clearInterval(sTimer); sTimer=null; } }
+
     document.addEventListener('keydown', e=>{
       if(qs('#view-snake').hidden) return;
       const k=e.key.toLowerCase();
@@ -470,11 +510,12 @@
       if(k==='p') sPaused=!sPaused;
     });
     qs('#s-new').addEventListener('click', sReset);
+    qs('#s-quick-new').addEventListener('click', sReset);
     qs('#s-speed').addEventListener('change', sLoop);
     qs('[data-open="view-snake"]').addEventListener('click', ()=>{ sReset(); qs('#s-best').textContent=store.get(HS.s,0); });
 
     /* ========================
-       Flappy Square
+       Flappy Square (cleanup + restart button)
        ======================== */
     const fCanvas = qs('#f-canvas'), fCtx = fCanvas.getContext('2d');
     let fBird, fPipes, fScore, fAnim=null, fRunning=false, fPaused=false, fLast=0;
@@ -509,10 +550,14 @@
     function fEnd(){
       fRunning=false; cancelAnimationFrame(fAnim); SFX.bad();
       const best=store.get(HS.f,0); if(fScore>best){ store.set(HS.f, fScore); qs('#f-best').textContent=fScore; refreshHubHS(); }
-      alert('Crash! Score: '+fScore);
+      setTimeout(()=>alert('Crash! Score: '+fScore), 10);
     }
     function fFlap(){ if(!fRunning) return; fBird.vy = -6; SFX.move(); }
-    qs('#f-start').addEventListener('click', ()=>{ fReset(); fRunning=true; fLast=0; qs('#f-best').textContent=store.get(HS.f,0); fLoop(0); });
+    function fStart(){ fReset(); fRunning=true; fLast=0; qs('#f-best').textContent=store.get(HS.f,0); fLoop(0); }
+    function flappyCleanup(){ cancelAnimationFrame(fAnim); fRunning=false; }
+
+    qs('#f-start').addEventListener('click', fStart);
+    qs('#f-restart').addEventListener('click', fStart);
     fCanvas.addEventListener('mousedown', fFlap); fCanvas.addEventListener('touchstart', fFlap);
     document.addEventListener('keydown', e=>{
       if(qs('#view-flap').hidden) return;
@@ -522,7 +567,7 @@
     qs('[data-open="view-flap"]').addEventListener('click', ()=>{ fReset(); qs('#f-best').textContent=store.get(HS.f,0); });
 
     /* ========================
-       Memory Match
+       Memory Match (cleanup + restart shortcut)
        ======================== */
     const mGrid = qs('#memory-grid'), mTimeEl=qs('#m-time'), mMovesEl=qs('#m-moves'),
           mBestEl=qs('#m-best'), mWin=qs('#m-win'), mFinal=qs('#m-final');
@@ -560,11 +605,14 @@
       const best=store.get(HS.m,null);
       if(!best || mTime<best.time || (mTime===best.time && mMoves<best.moves)){ store.set(HS.m,{time:mTime,moves:mMoves}); refreshHubHS(); }
     }
+    function memoryCleanup(){ clearInterval(mTimer); }
+
     qs('#m-new').addEventListener('click', mReset);
+    qs('#m-quick-new').addEventListener('click', mReset);
     qs('[data-open="view-memo"]').addEventListener('click', mReset);
 
     /* ====== Initial Hub state ====== */
-    // nothing selected at load
+    // none selected at load
 
   });
   </script>
