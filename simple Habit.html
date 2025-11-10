@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>30-Day Habit Tracker — Gradient Edition</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Marcellus:wght@400&display=swap" rel="stylesheet">
+
+<style>
+/* ---- Design Tokens ---- */
+:root{
+  --paper:#ffffff;
+  --ink:#0b1220;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --line-strong:#cbd5e1;
+  --accent:#11182708;
+  --radius:14px;
+  --shadow:0 8px 26px rgba(0,0,0,.08);
+
+  /* THEME (editable) */
+  --brand:#0ea5e9;         /* start color */
+  --brand-2:#22c55e;       /* end color   */
+  --grad-angle:135deg;     /* gradient angle */
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0b1220; --ink:#e5e7eb; --muted:#9aa4b2;
+    --line:#1f2a3a; --line-strong:#2a3a52; --accent:#ffffff06;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:
+   radial-gradient(900px 500px at 10% -10%, color-mix(in srgb, var(--brand) 12%, transparent), transparent 60%),
+   radial-gradient(900px 500px at 110% 0%, color-mix(in srgb, var(--brand-2) 12%, transparent), transparent 60%),
+   var(--paper);
+  color:var(--ink);
+  font:14px/1.45 "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+.container{max-width:1400px; margin:32px auto; padding:0 20px}
+
+/* Header */
+.header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px}
+.brand{display:flex; gap:14px; align-items:center}
+.logo{
+  width:54px; height:54px; border-radius:16px; display:grid; place-items:center;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--brand) 28%, transparent), transparent 60%),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--brand-2) 28%, transparent), transparent 60%),
+    var(--paper);
+  border:1px solid var(--line); box-shadow:var(--shadow)
+}
+.logo svg{width:28px; height:28px}
+h1{margin:0; font-family:"Marcellus", serif; font-size:30px; letter-spacing:.2px}
+h1 small{display:block; color:var(--muted); font:600 12px/1.1 Inter, sans-serif; letter-spacing:.3px}
+
+/* Controls */
+.controls{display:flex; gap:10px; flex-wrap:wrap}
+button, .ghost{
+  background:linear-gradient(var(--grad-angle), var(--brand), var(--brand-2));
+  color:white; border:none; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer; box-shadow:var(--shadow)
+}
+.ghost{background:transparent; color:var(--ink); border:1px solid var(--line-strong); box-shadow:none}
+
+/* Theme panel */
+.theme{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center; color:var(--muted); font-size:12px; margin:6px 0 14px
+}
+.theme .tile{
+  display:flex; align-items:center; gap:8px; border:1px solid var(--line-strong); border-radius:12px; padding:8px 10px; background:var(--paper)
+}
+.theme input[type="color"]{width:32px; height:28px; border:none; background:transparent; padding:0}
+.theme input[type="range"]{accent-color: var(--brand); width:150px}
+.theme .swatch{
+  width:110px; height:28px; border-radius:10px; border:1px solid var(--line-strong);
+  background:linear-gradient(var(--grad-angle), var(--brand), var(--brand-2));
+}
+.theme .btn{padding:8px 10px; border-radius:10px; border:1px solid var(--line-strong); background:var(--paper); color:var(--ink); cursor:pointer}
+.theme .btn.primary{border:none; color:white; background:linear-gradient(var(--grad-angle), var(--brand), var(--brand-2))}
+
+/* Card */
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.35));
+  border:1px solid var(--line-strong); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden
+}
+
+/* Progress */
+.progress{
+  display:flex; gap:12px; align-items:center; padding:14px 16px; border-bottom:1px solid var(--line);
+  background:var(--accent)
+}
+.bar{flex:1; height:12px; border-radius:999px; border:1px solid var(--line-strong); background:#00000008; overflow:hidden}
+.bar i{display:block; height:100%; width:0%; background:linear-gradient(90deg, var(--brand), var(--brand-2)); transition:width .25s ease}
+.pct{min-width:70px; text-align:right; font-weight:800; color:var(--muted)}
+.kpis{display:flex; gap:18px; color:var(--muted); font-size:12px}
+
+/* Grid */
+.grid{
+  --name-col: 220px;
+  display:grid; grid-template-columns: var(--name-col) repeat(30, minmax(26px, 1fr));
+  overflow:auto; border-top:1px solid var(--line)
+}
+.cell{padding:10px; border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center; background:transparent}
+.cell.h{position:sticky; top:0; z-index:3; background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.85));
+  font-weight:800; font-size:12px; color:var(--muted); backdrop-filter:saturate(140%) blur(2px)}
+.cell.name{position:sticky; left:0; z-index:2; justify-content:flex-start; gap:10px; padding-left:14px;
+  background:linear-gradient(90deg, rgba(255,255,255,.9), rgba(255,255,255,.85))}
+.cell.name .rowpct{margin-left:auto; color:var(--muted); font-weight:700}
+.cell.h.day{cursor:pointer}
+.cell.name .label{cursor:pointer}
+
+/* Weekly separators */
+.week{background:linear-gradient(0deg,
+   color-mix(in srgb, var(--brand) 8%, transparent),
+   color-mix(in srgb, var(--brand-2) 8%, transparent))}
+.cell.weekhead{background:linear-gradient(180deg,
+   color-mix(in srgb, var(--brand) 12%, transparent),
+   rgba(255,255,255,.02))}
+
+/* Checkbox */
+.cb{
+  appearance:none; -webkit-appearance:none; width:18px; height:18px; border:2px solid #8aa0b5; border-radius:6px;
+  display:grid; place-items:center; cursor:pointer; background:transparent; transition:all .15s ease
+}
+.cb:hover{border-color:#5c7896}
+.cb:checked{
+  border-color:transparent;
+  background:linear-gradient(var(--grad-angle), var(--brand), var(--brand-2));
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent) inset
+}
+
+/* Legend */
+.legend{padding:10px 16px; color:var(--muted); font-size:12px; display:flex; gap:18px; flex-wrap:wrap;
+  border-top:1px solid var(--line); background:var(--accent)}
+.legend b{color:var(--ink)}
+
+/* Print */
+@media print{
+  @page{size: A4 landscape; margin:10mm}
+  body{background:white}
+  .container{margin:0; max-width:none; padding:0}
+  .controls, .theme{display:none !important}
+  .logo{box-shadow:none}
+  .card{box-shadow:none}
+  .cell{border-color:#e5e7eb}
+  .cell.h, .cell.name{background:white}
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="url(#g)" stroke-width="1.6">
+            <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="var(--brand)"/><stop offset="1" stop-color="var(--brand-2)"/></linearGradient></defs>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3v18M3 12h18M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2" opacity=".3"/>
+          </svg>
+        </div>
+        <div>
+          <h1>30-Day Habit Tracker
+            <small>Click a habit name or a day to toggle the entire row/column</small>
+          </h1>
+          <!-- Gradient Theme Panel -->
+          <div class="theme" id="themePanel">
+            <div class="tile">
+              <span>Start</span><input type="color" id="c1" value="#0ea5e9">
+              <span>End</span><input type="color" id="c2" value="#22c55e">
+            </div>
+            <div class="tile">
+              <span>Angle</span><input type="range" id="angle" min="0" max="360" value="135">
+              <span id="angleVal">135°</span>
+            </div>
+            <div class="swatch" title="Preview"></div>
+            <button class="btn" id="randomBtn" title="Generate random gradient">🎨 Generate</button>
+            <button class="btn primary" id="applyBtn" title="Apply gradient">Apply</button>
+            <button class="btn" id="resetBtn" title="Reset to default">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="printBtn" title="Print or Save as PDF">🖨️ Print / Save PDF</button>
+        <button id="clearBtn" class="ghost" title="Clear all checkboxes">⟲ Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="progress">
+        <div class="bar" role="progressbar" aria-label="Overall progress"><i id="overallBar"></i></div>
+        <div class="pct" id="overallPct">0%</div>
+        <div class="kpis" id="kpis"></div>
+      </div>
+
+      <div id="grid" class="grid" role="table" aria-label="30-day habit tracker"></div>
+
+      <div class="legend">
+        <span>✔️ <b>Autosaves</b> in your browser</span>
+        <span>🖱️ Click <b>headers</b> to toggle row/column</span>
+        <span>🗂️ Weeks marked with subtle bands</span>
+        <span>🖨️ Use <b>Print</b> to export as PDF</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const DAYS = 30;
+
+  // --- Habits (Five daily prayers + your items) ---
+  const HABITS = [
+    "Fajr",
+    "Zohr",
+    "Asr",
+    "Maghrib",
+    "Isha",
+    "Qur’an Pak Reading",
+    "Zikr / Ibadah",
+    "No Lust",
+    "Remember an Ayat",
+    "Productive Work",
+    "Study",
+    "Workout",
+    "Exercise",
+    "Book Reading"
+  ];
+
+  const STORAGE_KEY = "pro-habit-tracker-v3";
+  const THEME_KEY = STORAGE_KEY + ":theme";
+  const grid = document.getElementById("grid");
+
+  // ------- Build Header Row -------
+  function buildHeader(){
+    const corner = makeCell("Habit / Day", "h name");
+    grid.appendChild(corner);
+    for(let d=1; d<=DAYS; d++){
+      const c = makeCell(String(d), "h day");
+      c.dataset.col = d;
+      c.title = "Toggle entire Day " + d;
+      if(d % 7 === 0) c.classList.add("weekhead");
+      grid.appendChild(c);
+    }
+  }
+
+  // ------- Build Habit Rows -------
+  function buildRows(){
+    HABITS.forEach((label, r) => {
+      const nameCell = makeCell("", "name");
+      nameCell.dataset.row = r;
+
+      const span = document.createElement("span");
+      span.textContent = label;
+      span.className = "label";
+      span.title = "Toggle entire row: " + label;
+
+      const rowPct = document.createElement("span");
+      rowPct.className = "rowpct";
+      rowPct.textContent = "0%";
+
+      nameCell.appendChild(span);
+      nameCell.appendChild(rowPct);
+      grid.appendChild(nameCell);
+
+      for(let d=1; d<=DAYS; d++){
+        const wrapper = makeCell("", d % 7 === 0 ? "week" : "");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "cb";
+        cb.dataset.row = r;
+        cb.dataset.col = d;
+        cb.id = key(r,d);
+        wrapper.appendChild(cb);
+        grid.appendChild(wrapper);
+      }
+    });
+  }
+
+  function makeCell(text, cls){
+    const div = document.createElement("div");
+    div.className = "cell " + (cls || "");
+    if(text) div.textContent = text;
+    return div;
+  }
+  const key = (r,c) => `r${r}-d${c}`;
+
+  // ------- State -------
+  const readState = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; } };
+  const writeState = (s) => localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+
+  function applyState(){
+    const state = readState();
+    document.querySelectorAll(".cb").forEach(cb => cb.checked = !!state[cb.id]);
+    updateProgress();
+  }
+
+  // ------- Interactions -------
+  function bind(){
+    grid.addEventListener("change", e=>{
+      if(!e.target.classList.contains("cb")) return;
+      const s = readState();
+      s[e.target.id] = e.target.checked;
+      writeState(s);
+      updateProgress();
+    });
+
+    // Column toggle
+    grid.addEventListener("click", e=>{
+      const head = e.target.closest(".cell.h.day");
+      if(!head) return;
+      toggleColumn(Number(head.dataset.col));
+    });
+
+    // Row toggle
+    grid.addEventListener("click", e=>{
+      const name = e.target.closest(".cell.name .label");
+      if(!name) return;
+      const row = Number(name.parentElement.dataset.row);
+      toggleRow(row);
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", ()=>{
+      if(confirm("Clear all checkboxes?")){
+        writeState({});
+        applyState();
+      }
+    });
+    document.getElementById("printBtn").addEventListener("click", ()=> window.print());
+
+    // Theme events
+    const c1 = document.getElementById("c1");
+    const c2 = document.getElementById("c2");
+    const angle = document.getElementById("angle");
+    const angleVal = document.getElementById("angleVal");
+    const swatch = document.querySelector(".swatch");
+
+    function updateSwatch(){
+      swatch.style.background = `linear-gradient(${angle.value}deg, ${c1.value}, ${c2.value})`;
+      angleVal.textContent = angle.value + "°";
+    }
+    ["input","change"].forEach(evt=>{
+      c1.addEventListener(evt, updateSwatch);
+      c2.addEventListener(evt, updateSwatch);
+      angle.addEventListener(evt, updateSwatch);
+    });
+
+    document.getElementById("applyBtn").addEventListener("click", ()=>{
+      applyTheme({ c1: c1.value, c2: c2.value, a: parseInt(angle.value,10) });
+    });
+    document.getElementById("randomBtn").addEventListener("click", ()=>{
+      const rnd = () => "#"+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,"0");
+      c1.value = rnd(); c2.value = rnd(); angle.value = Math.floor(Math.random()*361);
+      updateSwatch();
+      applyTheme({ c1: c1.value, c2: c2.value, a: parseInt(angle.value,10) });
+    });
+    document.getElementById("resetBtn").addEventListener("click", ()=>{
+      const def = { c1:"#0ea5e9", c2:"#22c55e", a:135 };
+      c1.value = def.c1; c2.value = def.c2; angle.value = def.a; updateSwatch();
+      applyTheme(def);
+    });
+
+    // initialize swatch from saved or defaults
+    const saved = readTheme() || { c1:getCss("--brand"), c2:getCss("--brand-2"), a: parseInt(getCss("--grad-angle"))||135 };
+    c1.value = saved.c1; c2.value = saved.c2; angle.value = saved.a; updateSwatch();
+    applyTheme(saved);
+  }
+
+  function getCss(varName){
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
+
+  function toggleRow(r){
+    const boxes = [...document.querySelectorAll(`.cb[data-row="${r}"]`)];
+    const allChecked = boxes.every(b => b.checked);
+    const s = readState();
+    boxes.forEach(b => { b.checked = !allChecked; s[b.id] = b.checked; });
+    writeState(s); updateProgress();
+  }
+  function toggleColumn(c){
+    const boxes = [...document.querySelectorAll(`.cb[data-col="${c}"]`)];
+    const allChecked = boxes.every(b => b.checked);
+    const s = readState();
+    boxes.forEach(b => { b.checked = !allChecked; s[b.id] = b.checked; });
+    writeState(s); updateProgress();
+  }
+
+  // ------- Metrics -------
+  function updateProgress(){
+    const boxes = [...document.querySelectorAll(".cb")];
+    const total = boxes.length;
+    const checked = boxes.filter(b=>b.checked).length;
+    const pct = total ? Math.round(checked/total*100) : 0;
+    document.getElementById("overallBar").style.width = pct + "%";
+    document.getElementById("overallPct").textContent = pct + "%";
+
+    // per row %
+    HABITS.forEach((_, r)=>{
+      const rowBoxes = boxes.filter(b => Number(b.dataset.row) === r);
+      const p = rowBoxes.length ? Math.round(rowBoxes.filter(b=>b.checked).length / rowBoxes.length * 100) : 0;
+      const el = grid.querySelector(`.cell.name[data-row="${r}"] .rowpct`);
+      if(el) el.textContent = p + "%";
+    });
+
+    // KPIs by week
+    const kpi = document.getElementById("kpis");
+    const weekTotals = [1,8,15,22,29].map((start,i)=> {
+      const end = Math.min(start+6, DAYS);
+      const cbs = boxes.filter(b => Number(b.dataset.col) >= start && Number(b.dataset.col) <= end);
+      const p = cbs.length ? Math.round(cbs.filter(b=>b.checked).length/cbs.length*100) : 0;
+      return {w:i+1, p};
+    });
+    kpi.innerHTML = weekTotals.map(w => `<span><strong>W${w.w}</strong> ${w.p}%</span>`).join("");
+  }
+
+  // ------- Theme Save/Load -------
+  function applyTheme({c1, c2, a}){
+    document.documentElement.style.setProperty("--brand", c1);
+    document.documentElement.style.setProperty("--brand-2", c2);
+    document.documentElement.style.setProperty("--grad-angle", a+"deg");
+    writeTheme({c1, c2, a});
+  }
+  function writeTheme(t){
+    localStorage.setItem(THEME_KEY, JSON.stringify(t));
+    // also refresh logo gradient definition (SVG uses CSS vars already)
+  }
+  function readTheme(){
+    try { return JSON.parse(localStorage.getItem(THEME_KEY) || "null"); } catch { return null; }
+  }
+
+  // ------- Init -------
+  function makeGrid(){
+    buildHeader();
+    buildRows();
+  }
+  makeGrid();
+  bind();
+  applyState();
+})();
+</script>
+</body>
+</html>
