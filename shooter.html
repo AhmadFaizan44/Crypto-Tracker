@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Neon Hand Shooter: Infinite</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        /* Video is hidden but active for processing */
+        #input-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        /* The main game view */
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* UI Overlay */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #score-display {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        #level-display {
+            color: #f0f;
+            text-shadow: 0 0 10px #f0f;
+        }
+
+        .hud-bottom {
+            text-align: center;
+            padding-bottom: 30px;
+        }
+
+        #status-msg {
+            color: #ff0;
+            font-size: 16px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        /* Start Screen */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 3rem;
+            margin: 0;
+            text-shadow: 0 0 20px #0ff, 2px 2px 0px #f0f;
+            letter-spacing: 5px;
+        }
+
+        p { color: #aaa; max-width: 500px; text-align: center; line-height: 1.6; margin: 20px 0; }
+
+        .btn {
+            background: transparent;
+            color: #0ff;
+            border: 2px solid #0ff;
+            padding: 15px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .btn:hover { background: #0ff; color: #000; box-shadow: 0 0 30px #0ff; }
+        .btn:disabled { border-color: #555; color: #555; cursor: not-allowed; box-shadow: none; }
+
+        /* Floating Text Animations */
+        .floater {
+            position: absolute;
+            font-weight: 900;
+            font-size: 24px;
+            pointer-events: none;
+            animation: popUp 0.8s ease-out forwards;
+        }
+        @keyframes popUp {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+            50% { transform: translate(-50%, -100%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -150%) scale(1.0); }
+        }
+    </style>
+</head>
+<body>
+
+<video id="input-video" playsinline></video>
+<canvas id="game-canvas"></canvas>
+
+<div id="ui-layer">
+    <div class="hud-top">
+        <div id="score-display">SCORE: 0</div>
+        <div id="level-display">WAVE: 1</div>
+    </div>
+    <div class="hud-bottom">
+        <div id="status-msg">SYSTEM INITIALIZING...</div>
+    </div>
+</div>
+
+<div id="overlay">
+    <h1>NEON GUNNER</h1>
+    <p>
+        <strong style="color:#fff">MISSION:</strong> Defend the grid.<br><br>
+        1. 🖐️ Show hand. Index finger is your <strong>SIGHT</strong>.<br>
+        2. 🤏 Pinch Thumb to Index knuckle to <strong>SHOOT</strong>.<br>
+        3. 🧲 Aim gets <strong>sticky</strong> near enemies.<br>
+    </p>
+    <button id="start-btn" class="btn" disabled>LOADING VISION...</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@mediapipe/control_utils@0.6.1629159505/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
+
+<script>
+/**
+ * 1. AUDIO ENGINE (Synthesizer)
+ * Creates sound effects without external files.
+ */
+const AudioFx = {
+    ctx: null,
+    init() {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+    },
+    playTone(freq, type, duration, vol = 0.1) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    },
+    shoot() { 
+        // Laser pew
+        if(!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.2);
+    },
+    explode() {
+        // Noise burst
+        this.playTone(100, 'sawtooth', 0.3, 0.4);
+        this.playTone(50, 'square', 0.4, 0.4);
+    },
+    lockOn() {
+        this.playTone(1200, 'sine', 0.05, 0.05);
+    }
+};
+
+/**
+ * 2. GAME ENGINE (Three.js)
+ */
+const Game = {
+    scene: null, camera: null, renderer: null,
+    
+    // Game State
+    active: false,
+    score: 0,
+    wave: 1,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    
+    // Objects
+    enemies: [],
+    particles: [],
+    reticle: null,
+    laser: null,
+    
+    // Tracking Data
+    rawCursor: new THREE.Vector2(0,0),
+    smoothCursor: new THREE.Vector2(0,0),
+    
+    // Mechanics
+    triggerLocked: false,
+    magneticStrength: 0.15, // How hard the crosshair snaps to target
+    baseSpeed: 0.05,
+
+    // Reusable Geometries/Materials (Performance)
+    geoEnemy: new THREE.CylinderGeometry(0.8, 0.8, 0.3, 16),
+    matEnemy: new THREE.MeshPhongMaterial({ color: 0xff00ff, shininess: 100 }),
+    geoParticle: new THREE.BoxGeometry(0.15, 0.15, 0.15),
+    matParticle: new THREE.MeshBasicMaterial({ color: 0x00ffff }),
+
+    init() {
+        // Scene Setup
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.FogExp2(0x050505, 0.03);
+
+        this.camera = new THREE.PerspectiveCamera(60, this.width / this.height, 0.1, 100);
+        this.camera.position.set(0, 0, 15);
+
+        this.renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('game-canvas'), 
+            antialias: true, 
+            alpha: false 
+        });
+        this.renderer.setSize(this.width, this.height);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Lighting
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        this.scene.add(light);
+        this.scene.add(new THREE.AmbientLight(0x404040, 2));
+
+        // Retro Grid Floor
+        const gridHelper = new THREE.GridHelper(100, 50, 0x00ffff, 0x222222);
+        gridHelper.rotation.x = Math.PI / 2; // Face camera
+        gridHelper.position.z = -20; // Background
+        this.scene.add(gridHelper);
+
+        // Reticle
+        const reticleGeo = new THREE.RingGeometry(0.3, 0.4, 32);
+        const reticleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
+        this.reticle = new THREE.Mesh(reticleGeo, reticleMat);
+        this.scene.add(this.reticle);
+
+        // Laser Line
+        const laserGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-10,5), new THREE.Vector3(0,0,0)]);
+        const laserMat = new THREE.LineBasicMaterial({ color: 0xff00aa, transparent: true, opacity: 0.6, linewidth: 2 });
+        this.laser = new THREE.Line(laserGeo, laserMat);
+        this.scene.add(this.laser);
+
+        // Listeners
+        window.addEventListener('resize', () => this.resize());
+        this.animate();
+    },
+
+    resize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.camera.aspect = this.width / this.height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(this.width, this.height);
+    },
+
+    spawnEnemy() {
+        const enemy = new THREE.Mesh(this.geoEnemy, this.matEnemy.clone());
+        
+        // Spawn on edge of screen (roughly)
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 12 + (Math.random() * 5);
+        enemy.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+        enemy.rotation.x = Math.PI / 2; // Face camera
+        
+        // Randomize Color
+        enemy.material.color.setHSL(Math.random(), 1, 0.5);
+        
+        // Calculate velocity towards center (0,0,0)
+        const dir = new THREE.Vector3().subVectors(new THREE.Vector3(0,0,0), enemy.position).normalize();
+        
+        // Speed increases with Wave
+        const speed = (this.baseSpeed + (this.wave * 0.005)) * (0.8 + Math.random() * 0.4);
+        
+        enemy.userData = { velocity: dir.multiplyScalar(speed), rotSpeed: (Math.random()-0.5)*0.2 };
+        
+        this.enemies.push(enemy);
+        this.scene.add(enemy);
+    },
+
+    spawnParticles(pos, color) {
+        for(let i=0; i<8; i++) {
+            const p = new THREE.Mesh(this.geoParticle, new THREE.MeshBasicMaterial({color: color}));
+            p.position.copy(pos);
+            // Random explosion velocity
+            p.userData = {
+                vel: new THREE.Vector3((Math.random()-0.5), (Math.random()-0.5), (Math.random()-0.5)).multiplyScalar(0.3),
+                life: 1.0
+            };
+            this.particles.push(p);
+            this.scene.add(p);
+        }
+    },
+
+    updateInput(x, y, isPinched) {
+        // Map normalized input (0..1) to Camera Space (-aspect..aspect)
+        // Note: Input X is already mirrored (0=left, 1=right)
+        
+        // Get visible dimensions at z=0
+        const vHeight = 2 * Math.tan((this.camera.fov * Math.PI / 180) / 2) * Math.abs(this.camera.position.z);
+        const vWidth = vHeight * this.camera.aspect;
+
+        // Map 0..1 to World Coordinates
+        const targetX = (x - 0.5) * vWidth; 
+        const targetY = -(y - 0.5) * vHeight; // Invert Y
+
+        this.rawCursor.set(targetX, targetY);
+
+        // Process Trigger (Schmidt Trigger Logic)
+        if (isPinched && !this.triggerLocked) {
+            this.fire();
+            this.triggerLocked = true; // Wait for release
+        } else if (!isPinched) {
+            this.triggerLocked = false;
+        }
+    },
+
+    fire() {
+        AudioFx.shoot();
+        
+        // Raycast / Distance Check
+        // We use the Reticle position because it might be magnetically locked
+        const hitPos = this.reticle.position;
+        
+        let hitFound = false;
+        // Iterate backwards to allow removal
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+            const dist = hitPos.distanceTo(enemy.position);
+            
+            // Hit box size
+            if (dist < 1.5) {
+                this.destroyEnemy(enemy, i);
+                hitFound = true;
+                this.createFloater("HIT", hitPos, "#0f0");
+                break; // One shot, one kill
+            }
+        }
+
+        if(!hitFound) {
+            this.createFloater("MISS", hitPos, "#f00");
+        }
+        
+        // Visual Recoil
+        this.laser.material.opacity = 1;
+        this.reticle.scale.set(1.5, 1.5, 1.5);
+    },
+
+    destroyEnemy(enemy, index) {
+        AudioFx.explode();
+        this.spawnParticles(enemy.position, enemy.material.color);
+        this.scene.remove(enemy);
+        this.enemies.splice(index, 1);
+        
+        // Score
+        this.score += 100 * this.wave;
+        if (this.score % 1000 === 0) {
+            this.wave++;
+            document.getElementById('level-display').innerText = `WAVE: ${this.wave}`;
+            AudioFx.playTone(600, 'sine', 0.5); // Level up sound
+        }
+        document.getElementById('score-display').innerText = `SCORE: ${this.score}`;
+    },
+
+    createFloater(text, pos3d, color) {
+        // Project 3D pos to 2D screen
+        const vec = pos3d.clone().project(this.camera);
+        const x = (vec.x * .5 + .5) * this.width;
+        const y = (-(vec.y * .5) + .5) * this.height;
+
+        const el = document.createElement('div');
+        el.className = 'floater';
+        el.innerText = text;
+        el.style.color = color;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.textShadow = `0 0 5px ${color}`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 800);
+    },
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        if(!this.active) return;
+
+        // 1. Smooth Aiming (Lerp)
+        this.smoothCursor.lerp(this.rawCursor, 0.2); // 0.2 = smoothing factor
+
+        // 2. Magnetic Logic
+        let target = this.smoothCursor.clone();
+        let isLocked = false;
+        let minDist = 3.0; // Magnet radius
+        let lockedEnemy = null;
+
+        this.enemies.forEach(e => {
+            // Convert enemy pos to simple XY plane for distance check
+            const dist = new THREE.Vector2(e.position.x, e.position.y).distanceTo(this.smoothCursor);
+            if(dist < minDist) {
+                minDist = dist;
+                lockedEnemy = e;
+                isLocked = true;
+            }
+        });
+
+        if(isLocked && lockedEnemy) {
+            // Lerp reticle to enemy center
+            const enemyPos2D = new THREE.Vector2(lockedEnemy.position.x, lockedEnemy.position.y);
+            this.smoothCursor.lerp(enemyPos2D, 0.2); // Snap effect
+            this.reticle.material.color.setHex(0xff0055); // Red lock
+            this.reticle.rotation.z += 0.1; // Spin fast
+        } else {
+            this.reticle.material.color.setHex(0x00ffff); // Cyan idle
+            this.reticle.rotation.z += 0.01; // Spin slow
+        }
+
+        // Update Reticle & Laser Visuals
+        this.reticle.position.set(this.smoothCursor.x, this.smoothCursor.y, 0);
+        this.reticle.scale.lerp(new THREE.Vector3(1,1,1), 0.1); // Return to normal scale after recoil
+        this.laser.material.opacity = Math.max(0.3, this.laser.material.opacity - 0.1); // Fade laser
+
+        // Update Laser Geometry to connect bottom-center to reticle
+        const posAttr = this.laser.geometry.attributes.position;
+        // Point 0: Bottom center (relative to camera roughly)
+        posAttr.setXYZ(0, 0, -10, 5); 
+        // Point 1: The reticle
+        posAttr.setXYZ(1, this.reticle.position.x, this.reticle.position.y, 0);
+        posAttr.needsUpdate = true;
+
+        // 3. Update Enemies
+        // Maintain population
+        if(this.enemies.length < 4 + Math.floor(this.wave/2)) {
+            if(Math.random() < 0.05) this.spawnEnemy();
+        }
+
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const e = this.enemies[i];
+            e.position.add(e.userData.velocity);
+            e.rotation.x += e.userData.rotSpeed;
+            e.rotation.z += e.userData.rotSpeed;
+
+            // If it hits center (player), remove it and flash screen red
+            if (e.position.length() < 1.0) {
+                this.scene.remove(e);
+                this.enemies.splice(i, 1);
+                // Simple penalty
+                this.score = Math.max(0, this.score - 50);
+                document.getElementById('score-display').innerText = `SCORE: ${this.score}`;
+                // Screen shake/flash could go here
+                this.createFloater("OUCH", new THREE.Vector3(0,0,0), "#f00");
+                AudioFx.playTone(100, 'sawtooth', 0.5);
+            }
+        }
+
+        // 4. Update Particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.position.add(p.userData.vel);
+            p.scale.multiplyScalar(0.9); // Shrink
+            if(p.scale.x < 0.01) {
+                this.scene.remove(p);
+                this.particles.splice(i, 1);
+            }
+        }
+        
+        this.renderer.render(this.scene, this.camera);
+    }
+};
+
+/**
+ * 3. COMPUTER VISION (MediaPipe)
+ */
+const Vision = {
+    hands: null, camera: null,
+    
+    init() {
+        const video = document.getElementById('input-video');
+        const btn = document.getElementById('start-btn');
+        const status = document.getElementById('status-msg');
+
+        // Pinned version to prevent WASM crash
+        const MP_URL = 'https://unpkg.com/@mediapipe/hands@0.4.1646424915/';
+        
+        this.hands = new Hands({locateFile: (file) => `${MP_URL}${file}`});
+        
+        this.hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 0, // 0 is fastest (Lite), 1 is Full. Using 0 for FPS.
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        this.hands.onResults(this.onResults.bind(this));
+
+        this.camera = new Camera(video, {
+            onFrame: async () => {
+                await this.hands.send({image: video});
+            },
+            width: 640, // Lower res for higher FPS
+            height: 480
+        });
+
+        // UI Logic
+        this.camera.start().then(() => {
+            status.innerText = "VISION READY. WAITING FOR START.";
+            btn.disabled = false;
+            btn.innerText = "START MISSION";
+        });
+
+        btn.addEventListener('click', () => {
+            document.getElementById('overlay').style.opacity = 0;
+            setTimeout(() => document.getElementById('overlay').style.display = 'none', 500);
+            
+            AudioFx.init();
+            Game.init();
+            Game.active = true;
+            status.innerText = "SYSTEM ACTIVE";
+        });
+    },
+
+    onResults(results) {
+        if (!Game.active) return;
+        
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            const marks = results.multiHandLandmarks[0];
+            
+            // 1. Position: Index Finger Tip (8)
+            // Mirror X logic: x is 0..1, where 0 is left side of image.
+            // Since we mirror video visually, we want normalized X to match screen.
+            const x = 1.0 - marks[8].x; 
+            const y = marks[8].y;
+
+            // 2. Trigger: Distance between Thumb Tip (4) and Index Base (5)
+            // Using Index Base (MCP) is more reliable than Index Tip for "pinching" motions
+            // while aiming with the tip.
+            const dx = marks[4].x - marks[5].x;
+            const dy = marks[4].y - marks[5].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            // Threshold logic
+            const isPinched = dist < 0.05; // 5% of screen width roughly
+
+            Game.updateInput(x, y, isPinched);
+        }
+    }
+};
+
+// Boot Sequence
+Vision.init();
+
+</script>
+</body>
+</html>
